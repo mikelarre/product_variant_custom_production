@@ -1,0 +1,36 @@
+# Copyright 2019 Mikel Arregi Etxaniz - AvanzOSC
+# License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
+from odoo import fields, models
+
+
+class ProductVersion(models.Model):
+    _name = "product.version"
+
+    name = fields.Char(string="Name")
+    product_id = fields.Many2one(comodel_name="product.product",
+                                 string="Product")
+    custom_value_ids = fields.One2many(comodel_name="product.version.line",
+                                       inverse_name="product_version_id",
+                                       string="Custom Values")
+    partner_id = fields.Many2one(comodel_name="res.partner", string="Customer")
+
+
+class ProductVersionLine(models.Model):
+    _name = "product.version.line"
+
+    product_version_id = fields.Many2one(comodel_name="product_version")
+    attribute_id = fields.Many2one(comodel_name="product.attribute",
+                                   string="Attribute")
+    value_id = fields.Many2one(comodel_name="product.attribute.value",
+                               string="Value")
+    custom_value = fields.Char(string="Custom value")
+
+
+class VersionCustomLine(models.AbstractModel):
+    _name = "version.custom.line"
+
+    attribute_id = fields.Many2one(comodel_name="product.attribute",
+                                   string="Attribute")
+    value_id = fields.Many2one(comodel_name="product.attribute.value",
+                               string="Value")
+    custom_value = fields.Char(string="Custom value")
