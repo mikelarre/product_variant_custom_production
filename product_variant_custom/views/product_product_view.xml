@@ -27,5 +27,18 @@
             </field>
         </record>
 
+        <record model="ir.ui.view" id="product_product_version_normal_form_view">
+            <field name="name">product.product.version.normal.form</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view" />
+            <field name="arch" type="xml">
+                <button name="toggle_active" position="before">
+                    <button name="%(product_version_action)d" type="action" icon="fa-sitemap" class="oe_stat_button" attrs="{'invisible': [('product_version_count', '&lt;=', 1)]}" groups="product.group_product_variant">
+                        <field string="Versions" name="product_version_count" widget="statinfo"/>
+                    </button>
+                </button>
+            </field>
+        </record>
+
     </data>
 </openerp>

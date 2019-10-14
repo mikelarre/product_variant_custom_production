@@ -9,6 +9,8 @@
                 <xpath expr="//tree/field[@name='name']" position="after">
                     <field name="min_value" />
                     <field name="max_value" />
+                    <field name="min_tolerance" />
+                    <field name="max_tolerance" />
                 </xpath>
             </field>
         </record>

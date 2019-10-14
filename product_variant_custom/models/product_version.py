@@ -1,6 +1,6 @@
 # Copyright 2019 Mikel Arregi Etxaniz - AvanzOSC
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
-from odoo import fields, models
+from odoo import api, exceptions, fields, models, _
 
 
 class ProductVersion(models.Model):
@@ -25,6 +25,26 @@ class ProductVersionLine(models.Model):
                                string="Value")
     custom_value = fields.Char(string="Custom value")
 
+    @api.constrains('custom_value')
+    def _check_custom_range(self):
+        for line in self:
+            value = line.value_id
+            try:
+                custom = line.custom_value
+                custom_value = float(custom)
+            except ValueError:
+                return
+            if value.min_value == value.max_value == 0:
+                return
+            if custom_value < value.min_value >= 0:
+                raise exceptions.UserError(_(
+                    "Custom value is smaller than minimum allowed for this "
+                    "value"))
+            if custom_value > value.max_value >= 0:
+                raise exceptions.UserError(_(
+                    "Custom value is greater than maximum allowed for this "
+                    "value"))
+
 
 class VersionCustomLine(models.AbstractModel):
     _name = "version.custom.line"
@@ -34,3 +54,23 @@ class VersionCustomLine(models.AbstractModel):
     value_id = fields.Many2one(comodel_name="product.attribute.value",
                                string="Value")
     custom_value = fields.Char(string="Custom value")
+
+    @api.constrains('custom_value')
+    def _check_custom_range(self):
+        for line in self:
+            value = line.value_id
+            try:
+                custom = line.custom_value
+                custom_value = float(custom)
+            except ValueError:
+                return
+            if value.min_value == value.max_value == 0:
+                return
+            if custom_value < value.min_value >= 0:
+                raise exceptions.UserError(_(
+                    "Custom value is smaller than minimum allowed for this "
+                    "value"))
+            if custom_value > value.max_value >= 0:
+                raise exceptions.UserError(_(
+                    "Custom value is greater than maximum allowed for this "
+                    "value"))

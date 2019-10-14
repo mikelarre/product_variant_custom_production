@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-        <record model="ir.ui.view" id="sale_order_line_product_version_form">
-            <field name="name">sale.order.line.product.version.form</field>
-            <field name="model">sale.order</field>
-            <field name="inherit_id" ref="sale.view_order_form" />
+        <record model="ir.ui.view" id="stock_lot_product_version_form">
+            <field name="name">stock.lot.version.form</field>
+            <field name="model">stock.production.lot</field>
+            <field name="inherit_id" ref="stock.view_production_lot_form" />
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='order_line']/form//field[@name='product_id']"
+                <xpath expr="//field[@name='product_id']"
                        position="after">
                     <field name="product_version_id" domain="[('product_id','=',product_id)]"/>
                     <field name="version_value_ids"
@@ -22,16 +22,19 @@
                         </tree>
                     </field>
                 </xpath>
-                <xpath
-                        expr="//field[@name='order_line']/tree//field[@name='product_id']"
-                       position="after">
-                    <field name="product_version_id"/>
-                </xpath>
             </field>
         </record>
 
-        <menuitem id="menu_product" action="product_variant_custom.product_version_action_sell" name="Product Variants" parent="sale.product_menu_catalog" sequence="3" groups="base.group_no_one" active="False"/>
-        
-        
+        <record model="ir.ui.view" id="stock_lot_product_version_tree">
+            <field name="name">stock.lot.version.tree</field>
+            <field name="model">stock.production.lot</field>
+            <field name="inherit_id" ref="stock.view_production_lot_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='product_id']"
+                       position="after">
+                    <field name="product_version_id" domain="[('product_id','=',product_id)]"/>
+                </xpath>
+            </field>
+        </record>
     </data>
 </openerp>
