@@ -1,6 +1,6 @@
 # Copyright 2019 Mikel Arregi Etxaniz - AvanzOSC
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
-from odoo import api, fields, models
+from odoo import api, exceptions, fields, models, _
 
 
 class PurchaseOrderLine(models.Model):
@@ -11,10 +11,10 @@ class PurchaseOrderLine(models.Model):
     weight = fields.Float(string="Product Weight",
                           related="product_id.product_base_weight")
     version_dimension = fields.Float(string="Product Dimension",
-                                     related="product_version_id.dimension")
+                                     compute="_compute_total_dimension_weight")
     version_weight = fields.Float(
         string="Product Weight",
-        related="product_version_id.product_base_weight")
+        compute="_compute_total_dimension_weight")
     total_dimension = fields.Float(string="Total Dimension",
                                    compute="_compute_total_dimension_weight")
     total_weight = fields.Float(string="Total Weight",
@@ -22,17 +22,42 @@ class PurchaseOrderLine(models.Model):
     invisible_dimension = fields.Boolean(string="Invisible Dimension",
         related="product_id.invisible_dimension")
 
-    @api.depends("product_id", "product_version_id", "product_qty")
+    @api.depends("product_id.product_tmpl_id.attribute_dimensions",
+                 "product_qty", "dimension", "weight", "invisible_dimension")
     def _compute_total_dimension_weight(self):
         for line in self:
-            if line.product_version_id:
-                dimension = line.version_dimension
-                weight = line.version_weight
-            else:
-                dimension = line.dimension
-                weight = line.weight
-            line.total_dimension = dimension * line.product_qty
-            line.total_weight = weight * line.product_qty
+            multiplication = 1
+            dimensions_attr = \
+                list(line.product_id.product_tmpl_id.attribute_dimensions._ids)
+            dimenstion_attributes_qty = len(dimensions_attr)
+            dimension_values_qty = 0
+            if not dimensions_attr:
+                return
+            for attr in line.custom_value_ids:
+                if attr.attribute_id.id in dimensions_attr:
+                    dimension_values_qty += 1
+                    try:
+                        multiplication *= float(attr.custom_value)
+                        dimensions_attr.remove(attr.attribute_id.id)
+                    except ValueError:
+                        raise exceptions.UserError(
+                            _("Cant convert custom value to number"
+                              "in attribute: %s") % attr.attribute_id.name)
+            for value in line.product_id.attribute_value_ids:
+                if value.attribute_id.id in dimensions_attr:
+                    dimension_values_qty += 1
+                    try:
+                        multiplication *= float(value.name)
+                    except ValueError:
+                        raise exceptions.UserError(
+                            _("Cant convert custom value to number"
+                              "in attribute: %s") % value.attribute_id.name)
+            if dimenstion_attributes_qty == dimension_values_qty:
+                weight = line.product_id.product_tmpl_id.base_weight
+                line.version_dimension = multiplication
+                line.version_weight = multiplication * weight
+                line.total_dimension = multiplication * line.product_qty
+                line.total_weight = multiplication * weight * line.product_qty
 
     @api.depends('product_qty', 'price_unit', 'taxes_id')
     def _compute_amount(self):
