@@ -24,7 +24,7 @@
                 </xpath>
                 <xpath expr="//field[@name='order_line']/tree"
                        position="attributes">
-                    <attribute name="editable">false</attribute>
+                    <attribute name="edit">false</attribute>
                 </xpath>
                 <xpath expr="//field[@name='order_line']/tree//field[@name='product_id']"
                        position="after">

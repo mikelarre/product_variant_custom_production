@@ -10,20 +10,19 @@ class PurchaseOrderLine(models.Model):
                              related="product_id.dimension")
     weight = fields.Float(string="Product Weight",
                           related="product_id.product_base_weight")
-    version_dimension = fields.Float(string="Product Dimension",
-                                     compute="_compute_total_dimension_weight")
+    version_dimension = fields.Float(string="Product Dimension",)
+                                 #
+                                     #    compute="_compute_total_dimension_weight")
     version_weight = fields.Float(
-        string="Product Weight",
-        compute="_compute_total_dimension_weight")
-    total_dimension = fields.Float(string="Total Dimension",
-                                   compute="_compute_total_dimension_weight")
-    total_weight = fields.Float(string="Total Weight",
-                                compute="_compute_total_dimension_weight")
-    invisible_dimension = fields.Boolean(string="Invisible Dimension",
-        related="product_id.invisible_dimension")
+        string="Product Weight",)
+        #compute="_compute_total_dimension_weight")
+    total_dimension = fields.Float(string="Total Dimension",)
+          #                         compute="_compute_total_dimension_weight")
+    total_weight = fields.Float(string="Total Weight",)
+         #                       compute="_compute_total_dimension_weight")
 
-    @api.depends("product_id.product_tmpl_id.attribute_dimensions",
-                 "product_qty", "dimension", "weight", "invisible_dimension")
+
+    @api.onchange("product_qty", "custom_value_ids")
     def _compute_total_dimension_weight(self):
         for line in self:
             multiplication = 1
@@ -59,7 +58,8 @@ class PurchaseOrderLine(models.Model):
                 line.total_dimension = multiplication * line.product_qty
                 line.total_weight = multiplication * weight * line.product_qty
 
-    @api.depends('product_qty', 'price_unit', 'taxes_id')
+    @api.depends('product_qty', 'price_unit', 'taxes_id', 'version_dimension',
+                  'custom_value_ids')
     def _compute_amount(self):
         super()._compute_amount()
         for line in self:
@@ -67,20 +67,14 @@ class PurchaseOrderLine(models.Model):
             if price_by == 'qty':
                 continue
             if price_by == 'dimension':
-                if line.product_version_id:
-                    dimension = line.version_dimension
-                else:
-                    dimension = line.dimension
+                dimension = line.version_dimension
                 line.update({
                     'price_tax': line['price_tax'] * dimension,
                     'price_total': line['price_total'] * dimension,
                     'price_subtotal': line['price_subtotal'] * dimension,
                 })
             else:
-                if line.product_version_id:
-                    weight = line.version_weight
-                else:
-                    weight = line.weight
+                weight = line.version_weight
                 line.update({
                     'price_tax': line['price_tax'] * weight,
                     'price_total': line['price_total'] * weight,
