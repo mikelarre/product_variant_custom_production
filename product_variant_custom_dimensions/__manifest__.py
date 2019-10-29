@@ -11,7 +11,8 @@
     "website": "http://www.avanzosc.es",
     "category": "",
     "data": [
-         "views/product_view.xml",
+        "views/product_view.xml",
+        "data/dimension_data.xml",
     ],
     'demo': [],
     'installable': True,

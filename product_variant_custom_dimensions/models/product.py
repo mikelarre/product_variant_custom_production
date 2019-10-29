@@ -1,12 +1,14 @@
 # Copyright 2019 Mikel Arregi Etxaniz - AvanzOSC
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 from odoo import api, exceptions, fields, models, _
+from odoo.addons import decimal_precision as dp
 
 
 class ProductTemplate(models.Model):
     _inherit = "product.template"
 
-    base_weight = fields.Float(string="Base Weight", default=1)
+    base_weight = fields.Float(string="Base Weight", default=1,
+                               digits=dp.get_precision('Dimension'))
     weight_uom = fields.Many2one(comodel_name="uom.uom", string="uom")
     attribute_dimensions = fields.Many2many(
         comodel_name="product.attribute", string="Dimensions")
@@ -19,9 +21,12 @@ class ProductTemplate(models.Model):
 class ProductProduct(models.Model):
     _inherit = "product.product"
 
-    dimension = fields.Float(compute="_compute_dimension", string="Dimension")
+    dimension = fields.Float(compute="_compute_dimension", string="Dimension",
+                             digits=dp.get_precision('Dimension'))
     product_base_weight = fields.Float(compute="_compute_base_weight",
-                                       string="Base Weight")
+                                       string="Base Weight",
+                                       digits=dp.get_precision('Dimension')
+                                       )
     invisible_dimension = fields.Boolean(string="invisible_dimension",
                                          compute="_compute_dimension")
 

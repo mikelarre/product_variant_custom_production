@@ -1,24 +1,29 @@
 # Copyright 2019 Mikel Arregi Etxaniz - AvanzOSC
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 from odoo import api, exceptions, fields, models, _
-
+from odoo.addons import decimal_precision as dp
 
 class PurchaseOrderLine(models.Model):
     _inherit = "purchase.order.line"
 
     dimension = fields.Float(string="Product Dimension",
-                             related="product_id.dimension")
+                             related="product_id.dimension",
+                             digits=dp.get_precision('Dimension'))
     weight = fields.Float(string="Product Weight",
-                          related="product_id.product_base_weight")
-    version_dimension = fields.Float(string="Product Dimension",)
+                          related="product_id.product_base_weight",
+                          digits=dp.get_precision('Dimension'))
+    version_dimension = fields.Float(string="Product Dimension",
+                                     digits=dp.get_precision('Dimension'))
                                  #
                                      #    compute="_compute_total_dimension_weight")
-    version_weight = fields.Float(
-        string="Product Weight",)
+    version_weight = fields.Float(string="Product Weight",
+                                  digits=dp.get_precision('Dimension'))
         #compute="_compute_total_dimension_weight")
-    total_dimension = fields.Float(string="Total Dimension",)
+    total_dimension = fields.Float(string="Total Dimension",
+                                   digits=dp.get_precision('Dimension'))
           #                         compute="_compute_total_dimension_weight")
-    total_weight = fields.Float(string="Total Weight",)
+    total_weight = fields.Float(string="Total Weight",
+                                digits=dp.get_precision('Dimension'))
          #                       compute="_compute_total_dimension_weight")
 
 
