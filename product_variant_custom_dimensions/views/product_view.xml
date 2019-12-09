@@ -8,10 +8,10 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='categ_id']" position="after">
                     <field name="price_by"/>
-                    <div>
-                        <field name="base_weight"/>
-                        <field name="weight_uom" groups="uom.group_uom" class="oe_inline"/>
-                    </div>
+                        <div>
+                            <field name="base_weight" class="oe_inline" string="Base Weight"/>
+                            <field name="weight_uom" groups="uom.group_uom" nolabel="1" class="oe_inline"/>
+                        </div>
                     <field name="attribute_dimensions"
                            widget="many2many_tags"/>
                 </xpath>

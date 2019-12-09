@@ -3,4 +3,6 @@
 from odoo import fields, models
 
 
-class
+class StockMrp(models.Model):
+    _inherit = "stock.mrp"
+

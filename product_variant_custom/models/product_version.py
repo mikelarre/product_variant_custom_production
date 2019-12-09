@@ -18,7 +18,7 @@ class ProductVersion(models.Model):
 class ProductVersionLine(models.Model):
     _name = "product.version.line"
 
-    product_version_id = fields.Many2one(comodel_name="product_version")
+    product_version_id = fields.Many2one(comodel_name="product.version")
     attribute_id = fields.Many2one(comodel_name="product.attribute",
                                    string="Attribute")
     value_id = fields.Many2one(comodel_name="product.attribute.value",
