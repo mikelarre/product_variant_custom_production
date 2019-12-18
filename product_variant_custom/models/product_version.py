@@ -7,12 +7,27 @@ class ProductVersion(models.Model):
     _name = "product.version"
 
     name = fields.Char(string="Name")
+    product_tmpl_id = fields.Many2one(related="product_id.product_tmpl_id")
     product_id = fields.Many2one(comodel_name="product.product",
                                  string="Product")
     custom_value_ids = fields.One2many(comodel_name="product.version.line",
                                        inverse_name="product_version_id",
                                        string="Custom Values")
     partner_id = fields.Many2one(comodel_name="res.partner", string="Customer")
+
+    @api.multi
+    def get_custom_value_lines(self):
+        self.ensure_one()
+        lines = []
+        values = self.custom_value_ids
+        for value in values:
+            lines.append(
+                (0, 0, {
+                    'attribute_id': value.attribute_id.id,
+                    'value_id': value.value_id.id,
+                    'custom_value': value.custom_value,
+                }))
+        return lines
 
 
 class ProductVersionLine(models.Model):

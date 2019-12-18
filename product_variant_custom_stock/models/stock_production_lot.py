@@ -16,18 +16,10 @@ class StockMove(models.Model):
         inverse_name="line_id", copy=True)
 
     def _set_custom_lines(self):
-        for value in self.custom_value_ids:
-            self.custom_value_ids = [(2, value)]
-        lines = []
-        values = self.product_id.attribute_value_ids.filtered(
-            lambda x: x.is_custom)
-        for value in values:
-            lines.append(
-                (0, 0, {
-                    'attribute_id': value.attribute_id.id,
-                    'value_id': value.id,
-                }))
-        return lines
+        if self.product_version_id:
+            return self.product_version_id.get_custom_value_lines()
+        elif self.product_id:
+            return self.product_id.get_custom_value_lines()
 
     @api.onchange('product_id')
     def product_id_change(self):

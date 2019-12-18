@@ -40,6 +40,15 @@ class MrpProduction(models.Model):
     product_tmpl_id = fields.Many2one(
         comodel_name='product.template', string='Product', readonly=True,
         states={'draft': [('readonly', False)]})
+    product_version_id = fields.Many2one(comodel_name="product.version",
+                                         name="Product Version")
+    version_value_ids = fields.One2many(
+        comodel_name="product.version.line",
+        related="product_version_id.custom_value_ids")
+    custom_value_ids = fields.One2many(
+        comodel_name="production.product.version.custom.line",
+        string="Custom Values",
+        inverse_name="line_id", copy=True)
     product_attribute_ids = fields.One2many(
         comodel_name='mrp.production.attribute', inverse_name='mrp_production',
         string='Product attributes', copy=True, readonly=True,
@@ -56,8 +65,24 @@ class MrpProduction(models.Model):
                     product_tmpl=product.product_tmpl_id)
             self.product_attribute_ids = \
                 product._get_product_attributes_values_dict()
+            self.custom_value_ids = self._set_custom_lines()
+            self.product_version_id = False
             self.routing_id = self.bom_id.routing_id.id or False
         return result
+
+    def _set_custom_lines(self):
+        if self.product_version_id:
+            return self.product_version_id.get_custom_value_lines()
+        elif self.product_id:
+            return self.product_id.get_custom_value_lines()
+
+    @api.onchange('product_version_id')
+    def product_version_id_change(self):
+        for value in self.custom_value_ids:
+            self.custom_value_ids = [(2, value)]
+        if self.product_version_id:
+            self.product_id = self.product_version_id.product_id
+        self.custom_value_ids = self._set_custom_lines()
 
     @api.multi
     def _onchange_bom_id(self):
@@ -290,7 +315,7 @@ class MrpProductionProductLine(models.Model):
         comodel_name="product.version.line",
         related="product_version_id.custom_value_ids")
     custom_value_ids = fields.One2many(
-        comodel_name="production.product.version.custom.line",
+        comodel_name="mrp.production.product.version.custom.line",
         string="Custom Values",
         inverse_name="line_id", copy=True)
 
@@ -304,20 +329,6 @@ class MrpProductionProductLine(models.Model):
     #         attribute_ids = line.product_id.get_custom_attributes()
     #         line.possible_attribute_ids = [(6, 0, attribute_ids)]
 
-    def _set_custom_lines(self):
-        for value in self.custom_value_ids:
-            self.custom_value_ids = [(2, value)]
-        lines = []
-        values = self.product_id.attribute_value_ids.filtered(
-            lambda x: x.is_custom)
-        for value in values:
-            lines.append(
-                (0, 0, {
-                    'attribute_id': value.attribute_id.id,
-                    'value_id': value.id,
-                }))
-        return lines
-
     @api.onchange('product_id')
     def product_id_change(self):
         res = super().product_id_change()
@@ -325,12 +336,19 @@ class MrpProductionProductLine(models.Model):
         self.product_version_id = False
         return res
 
+    def _set_custom_lines(self):
+        if self.product_version_id:
+            return self.product_version_id.get_custom_value_lines()
+        elif self.product_id:
+            return self.product_id.get_custom_value_lines()
+
     @api.onchange('product_version_id')
     def product_version_id_change(self):
+        for value in self.custom_value_ids:
+            self.custom_value_ids = [(2, value)]
         if self.product_version_id:
             self.product_id = self.product_version_id.product_id
-        else:
-            self.custom_value_ids = self._set_custom_lines()
+        self.custom_value_ids = self._set_custom_lines()
 
     @api.onchange('product_tmpl_id')
     def onchange_product_template(self):
@@ -356,8 +374,14 @@ class MrpProductionProductLine(models.Model):
         self.product_id = product_obj._product_find(
             self.product_tmpl_id, self.product_attribute_ids)
 
+class MrpProductionProductVersionCustomLine(models.Model):
+    _inherit = "version.custom.line"
+    _name = "mrp.production.product.version.custom.line"
+
+    line_id = fields.Many2one(comodel_name="mrp.production.product.line")
+
 class ProductionProductVersionCustomLine(models.Model):
-    _inherit = "mrp.production.product.line"
+    _inherit = "version.custom.line"
     _name = "production.product.version.custom.line"
 
-    line_id = fields.Many2one(comodel_name="sale.order.line")
+    line_id = fields.Many2one(comodel_name="mrp.production")

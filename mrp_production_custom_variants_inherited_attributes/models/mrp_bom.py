@@ -116,20 +116,31 @@ class MrpBom(models.Model):
             product_tmpl=product_tmpl, product=product,
             picking_type=picking_type, company_id=company_id)
 
+    def _get_inherited_custom_values(self, attribute_line_ids,
+                                     custom_value_ids):
+        custom_values = []
+        for custom_line in custom_value_ids:
+            for attr in attribute_line_ids:
+                if custom_line.attribute_id.id == attr['attribute_id'] and \
+                        custom_line.value_id.id == attr.get('value_id'):
+                    attr['custom_value'] = custom_line.custom_value
+                    custom_values.append(attr)
+        return custom_values
+
     @api.model
     def _prepare_consume_line(self, bom_line, quantity, product,
                               original_qty, parent_line):
         res_line, res = super(MrpBom, self)._prepare_consume_line(
             bom_line, quantity, product, original_qty, parent_line)
+        production = self.env.context.get('production')
+        active_model = self.env.context.get('params').get('model')
+        if not production and active_model == 'mrp.production':
+            production = self.env['mrp.production'].browse(
+                self.env.context.get('params').get('id'))
+        tmpl_id = bom_line.product_tmpl_id
         if not bom_line.product_id:
-            tmpl_id = bom_line.product_tmpl_id
             res['name'] = tmpl_id.name
             res['product_tmpl_id'] = tmpl_id.id
-            production = self.env.context.get('production')
-            active_model = self.env.context.get('params').get('model')
-            if not production and active_model == 'mrp.production':
-                production = self.env['mrp.production'].browse(
-                    self.env.context.get('params').get('id'))
             product_attribute_ids = (
                 tmpl_id._get_product_attribute_ids_inherit_dict(
                     production.product_attribute_ids))
@@ -140,8 +151,8 @@ class MrpBom(models.Model):
             res['product_tmpl_id'] = bom_line.product_id.product_tmpl_id.id
             product_attribute_ids = (
                 bom_line.product_id._get_product_attributes_values_dict())
-            product_custom_value_ids = (
-                bom_line.product_id._get_product_custom_values_dict())
+        product_custom_value_ids = self._get_inherited_custom_values(
+            product_attribute_ids, production.custom_value_ids)
         res['product_attribute_ids'] = list(map(
             lambda x: (0, 0, x), product_attribute_ids))
         res['custom_value_ids'] = list(map(

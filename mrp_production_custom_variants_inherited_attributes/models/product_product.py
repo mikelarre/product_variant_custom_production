@@ -18,7 +18,7 @@ class ProductProduct(models.Model):
         return res
 
     @api.multi
-    def _get_product_custom_values_dict(self):
+    def _get_product_custom_values_dict(self, custom_value_ids):
         attrs = self.product_tmpl_id._get_product_attributes_dict()
         res = []
         for val in attrs:

@@ -17,6 +17,20 @@ class ProductProduct(models.Model):
             product.product_version_count = len(product.product_version_ids)
 
     @api.multi
+    def get_custom_value_lines(self):
+        self.ensure_one()
+        lines = []
+        values = self.attribute_value_ids.filtered(
+            lambda x: x.is_custom)
+        for value in values:
+            lines.append(
+                (0, 0, {
+                    'attribute_id': value.attribute_id.id,
+                    'value_id': value.id,
+                }))
+        return lines
+
+    @api.multi
     def get_custom_attributes(self):
         custom_attributes = []
         for product in self:
