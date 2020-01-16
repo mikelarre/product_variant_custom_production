@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+        <record model="ir.ui.view" id="stock_inventory_product_version_report_pivot">
+            <field name="name">stock.inventory.product.version.report.pivot</field>
+            <field name="model">stock.inventory.product.version.report</field>
+            <field name="arch" type="xml">
+                <graph type="pivot" string="Inventory pivot">
+                    <field name="create_date" type="row"/>
+                    <!--<field name="create_date" interval="week"-->
+                           <!--type="row"/>-->
+                    <field name="create_date" interval="day"
+                           type="row"/>
+                    <field name="production_product_id" type="row"/>
+                    <field name="raw_material_production_id" type="row"/>
+                    <field name="product_id" type="col"/>
+                    <field name="product_uom_qty" type="measure"/>
+                    <!--<field name="rrm_product_id"-->
+                           <!--type="measure"/>-->
+                    <field name="rrm_quantity"
+                           type="measure"/>
+                    <!--<field name="move_lines" type="measure"/>-->
+                </graph>
+            </field>
+        </record>
+
+        <record id="action_rrm_pivot" model="ir.actions.act_window">
+            <field name="name">RRM pivot</field>
+            <field name="res_model">stock.move</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,graph</field>
+            <field name="view_id" ref="mrp_production_rrm_pivot" />
+            <field name="domain">[('raw_material_production_id','!=',False)
+                ]</field>
+        </record>
+        <menuitem id="rrm_pivot_menu" name="Production pivot"
+                  parent="mrp.menu_mrp_manufacturing"
+                  action="action_rrm_pivot" />
+
+       <record id="action_project_task_user_tree" model="ir.actions.act_window">
+            <field name="name">Tasks Analysis</field>
+            <field name="res_model">stock.inventory.product.version.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">graph</field>
+            <field name="context">{'group_by_no_leaf':1,'group_by':[]}</field>
+        </record>
+
+        <menuitem action="action_project_task_user_tree" id="menu_project_task_user_tree" parent="base.menu_project_report"/>
+</openerp>

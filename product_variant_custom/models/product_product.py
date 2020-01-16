@@ -40,7 +40,7 @@ class ProductProduct(models.Model):
         return custom_attributes
 
     @api.model
-    def _build_attributes_domain(self, version_id, custom_values):
+    def _build_version_attributes_domain(self, version_id, custom_values):
         domain = []
         cont = 0
         assert len(self) == 1, _("Multiple products or none in _find_version "
@@ -67,7 +67,7 @@ class ProductProduct(models.Model):
                 [('product_id', '=', self.id)])
             version_line_obj = self.env['product.version.line']
             for version in versions:
-                domain, cont = self._build_attributes_domain(
+                domain, cont = self._build_version_attributes_domain(
                     version, custom_values)
                 custom_lines = version_line_obj.search(domain)
                 if len(custom_lines) == cont:

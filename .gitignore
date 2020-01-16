@@ -13,6 +13,7 @@ build/
 develop-eggs/
 dist/
 eggs/
+lib/
 lib64/
 parts/
 sdist/
@@ -20,7 +21,6 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-*.eggs
 
 # Installer logs
 pip-log.txt
@@ -40,6 +40,9 @@ coverage.xml
 # Pycharm
 .idea
 
+# Eclipse
+.settings/
+
 # Mr Developer
 .mr.developer.cfg
 .project
@@ -48,9 +51,15 @@ coverage.xml
 # Rope
 .ropeproject
 
+# Django stuff:
+*.log
+
 # Sphinx documentation
 docs/_build/
 
 # Backup files
 *~
 *.swp
+
+.settings/
+

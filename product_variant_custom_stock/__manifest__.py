@@ -11,8 +11,9 @@
     "website": "http://www.avanzosc.es",
     "category": "",
     "data": [
-         "security/ir.model.access.csv",
-         "views/stock_view.xml",
+        "security/ir.model.access.csv",
+        "views/stock_production_lot_view.xml",
+        "views/stock_picking_view.xml",
     ],
     'demo': [],
     'installable': True,
