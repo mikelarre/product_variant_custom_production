@@ -52,8 +52,8 @@ class PurchaseOrder(models.Model):
         inverse_name="line_id", copy=True)
 
     @api.onchange('product_id')
-    def product_id_change(self):
-        res = super().product_id_change()
+    def onchange_product_id(self):
+        res = super().onchange_product_id()
         self.custom_value_ids = self._set_custom_lines()
         self.product_version_id = False
         return res
