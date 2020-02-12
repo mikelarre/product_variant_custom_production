@@ -12,6 +12,7 @@
     "category": "",
     "data": [
          "views/purchase_order_view.xml",
+         "views/account_invoice_line_view.xml",
     ],
     'demo': [],
     'installable': True,

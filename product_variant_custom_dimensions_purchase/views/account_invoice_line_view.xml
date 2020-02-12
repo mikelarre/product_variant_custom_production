@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <record model="ir.ui.view" id="dimension_account_invoice_line_form">
+        <field name="name">dimension.account.invoice.line.form</field>
+        <field name="model">account.invoice.line</field>
+        <field name="inherit_id" ref="account.view_invoice_line_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="version_dimension" invisible="1"/>
+                <field name="version_weight" invisible="1"/>
+                <field name="total_dimension" />
+                <field name="total_weight" />
+            </xpath>
+        </field>
+    </record>
+
+</openerp>

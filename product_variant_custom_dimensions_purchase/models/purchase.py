@@ -33,7 +33,7 @@ class PurchaseOrderLine(models.Model):
             multiplication = 1
             dimensions_attr = \
                 list(line.product_id.product_tmpl_id.attribute_dimensions._ids)
-            dimenstion_attributes_qty = len(dimensions_attr)
+            dimension_attributes_qty = len(dimensions_attr)
             dimension_values_qty = 0
             if not dimensions_attr:
                 return
@@ -56,7 +56,7 @@ class PurchaseOrderLine(models.Model):
                         raise exceptions.UserError(
                             _("Cant convert custom value to number"
                               "in attribute: %s") % value.attribute_id.name)
-            if dimenstion_attributes_qty == dimension_values_qty:
+            if dimension_attributes_qty == dimension_values_qty:
                 weight = line.product_id.product_tmpl_id.base_weight
                 line.version_dimension = multiplication
                 line.version_weight = multiplication * weight
@@ -64,7 +64,7 @@ class PurchaseOrderLine(models.Model):
                 line.total_weight = multiplication * weight * line.product_qty
 
     @api.depends('product_qty', 'price_unit', 'taxes_id', 'version_dimension',
-                  'custom_value_ids')
+                  'version_weight', 'custom_value_ids')
     def _compute_amount(self):
         super()._compute_amount()
         for line in self:

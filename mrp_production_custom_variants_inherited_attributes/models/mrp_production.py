@@ -374,11 +374,13 @@ class MrpProductionProductLine(models.Model):
         self.product_id = product_obj._product_find(
             self.product_tmpl_id, self.product_attribute_ids)
 
+
 class MrpProductionProductVersionCustomLine(models.Model):
     _inherit = "version.custom.line"
     _name = "mrp.production.product.version.custom.line"
 
     line_id = fields.Many2one(comodel_name="mrp.production.product.line")
+
 
 class ProductionProductVersionCustomLine(models.Model):
     _inherit = "version.custom.line"
