@@ -26,7 +26,7 @@ class AccountInvoiceLine(models.Model):
     def _compute_total_dimension_weight(self):
         for line in self:
             line.total_dimension = line.version_dimension * line.quantity
-            line.version_weight = line.version_weight * line.quantity
+            line.total_weight = line.version_weight * line.quantity
 
     @api.depends('version_dimension', 'version_weight')
     def _compute_price(self):
