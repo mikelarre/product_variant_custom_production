@@ -56,6 +56,7 @@ class PurchaseOrder(models.Model):
         res = super().onchange_product_id()
         self.custom_value_ids = self._set_custom_lines()
         self.product_version_id = False
+        self.name = self._get_purchase_line_description()
         return res
 
     def _set_custom_lines(self):
@@ -64,13 +65,39 @@ class PurchaseOrder(models.Model):
         elif self.product_id:
             return self.product_id.get_custom_value_lines()
 
+
+    def _get_purchase_line_description(self):
+        if not self.product_id:
+            return
+        product_lang = self.product_id.with_context(
+            lang=self.partner_id.lang,
+            partner_id=self.partner_id.id,
+        )
+        self.name = product_lang.display_name or ""
+        version_description = " "
+        for value_line in self.custom_value_ids:
+            version_description += "[{}: {}({})]".format(
+                value_line.attribute_id.name, value_line.value_id.name,
+                value_line.custom_value)
+        if product_lang.description_purchase:
+            self.name += '\n' + product_lang.description_purchase
+        return self.name + version_description
+
     @api.onchange('product_version_id')
     def product_version_id_change(self):
         for value in self.custom_value_ids:
             self.custom_value_ids = [(2, value)]
         if self.product_version_id:
             self.product_id = self.product_version_id.product_id
+            self.name = self._get_purchase_line_description()
         self.custom_value_ids = self._set_custom_lines()
+
+    @api.onchange('custom_value_ids')
+    def onchange_version_lines(self):
+        product_version = self.product_id._find_version(
+            self.custom_value_ids)
+        self.product_version_id = product_version
+        self.name = self._get_purchase_line_description()
 
 
 class PurchaseVersionCustomLine(models.Model):
