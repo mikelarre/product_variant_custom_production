@@ -4,6 +4,17 @@ from odoo import api, fields, models
 from odoo.tools.float_utils import float_round
 
 
+class StockLocation(models.Model):
+    _inherit = "stock.location"
+
+    def _has_parent(self, parent_location):
+        if not self.location_id:
+            return False
+        elif self.location_id == parent_location:
+            return True
+        else:
+            return self.location_id._has_parent(parent_location)
+
 class StockMove(models.Model):
     _inherit = "stock.move"
 
@@ -11,15 +22,11 @@ class StockMove(models.Model):
                                          name="Product Version",
                                          compute="_compute_product_version",
                                          store="True")
-    real_in = fields.Float(string="Real In",
+    real_stock = fields.Float(string="Real In",
                            compute="_compute_move_in_out_qty", store="True")
-    real_out = fields.Float(string="Real Out",
-                            compute="_compute_move_in_out_qty", store="True")
-    virtual_in = fields.Float(string="Virtual In",
+    virtual_stock = fields.Float(string="Virtual In",
                               compute="_compute_move_in_out_qty", store="True")
-    virtual_out = fields.Float(string="Virtual Out",
-                               compute="_compute_move_in_out_qty",
-                               store="True")
+
 
     def _calculate_qty_available(self, domain_move_in_loc, domain_move_out_loc):
         domain_move_in = [('product_id', 'in', self.ids)] + domain_move_in_loc
@@ -36,10 +43,27 @@ class StockMove(models.Model):
                 ['product_id'], orderby='id'))
         return moves_res
 
-    @api.depends("location_id", "location_dest_id", "product_qty")
+    @api.depends("location_id", "location_dest_id", "product_qty",
+                 "product_version_id.initial_stock_date", "state")
     def _compute_move_in_out_qty(self):
-        location_obj = self.env['stock.location'].search([('name', '=', )])
-        physical_location =
+        location_obj = self.env['stock.location']
+        physical_location = location_obj.search(
+            [('name', '=', 'Physical Locations')])
+        virtual_location = location_obj.search(
+            [('name', '=', 'Virtual Locations')])
+        for move in self.filtered(
+                lambda x: x.state in ('waiting', 'confirmed', 'assigned',
+                                      'partially_available')):
+            initial_date = move.product_version_id.initial_stock_date
+            if not initial_date or move.date >= initial_date:
+                if move.location_dest_id._has_parent(physical_location):
+                    move.real_stock = move.product_qty
+                elif move.location_id._has_parent(physical_location):
+                    move.real_stock = -move.product_qty
+                elif move.location_dest_id._has_parent(virtual_location):
+                    move.virtual_stock = move.product_qty
+                elif move.location_id._has_parent(virtual_location):
+                    move.virtual_stock = -move.product_qty
         # for move in self:
         #     self.env['product.product']._get_domain_locations_new(move)
         # domain_quant_loc, domain_move_in_loc, domain_move_out_loc = self._get_domain_locations()

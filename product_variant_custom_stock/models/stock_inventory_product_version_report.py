@@ -36,12 +36,9 @@ class StockInventoryProductVersionReport(models.Model):
                 min(ml.id) as id,
                 ml.product_version_id as product_version_id,
                 ml.location_id,
-                sum(ml.real_in + ml.real_out + ml.virtual_in + 
-                ml.virtual_out) as product_qty,
-                sum(ml.real_in) as real_in_product_qty,
-                sum(ml.real_out) as real_out_product_qty,
-                sum(ml.virtual_in) as virtual_in_product_qty,
-                sum(ml.virtual_out) as virtual_out_product_qty
+                sum(ml.real_stock + ml.virtual_stock) as product_qty,
+                sum(ml.real_stock) as real_in_product_qty,
+                sum(ml.virtual_stock) as virtual_in_product_qty
             FROM
                 stock_move as ml
             GROUP BY

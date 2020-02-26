@@ -76,9 +76,10 @@ class PurchaseOrder(models.Model):
         self.name = product_lang.display_name or ""
         version_description = " "
         for value_line in self.custom_value_ids:
-            version_description += "[{}: {}({})]".format(
-                value_line.attribute_id.name, value_line.value_id.name,
-                value_line.custom_value)
+            if value_line.custom_value:
+                version_description += "[{}: {}({})]".format(
+                    value_line.attribute_id.name, value_line.value_id.name,
+                    value_line.custom_value)
         if product_lang.description_purchase:
             self.name += '\n' + product_lang.description_purchase
         return self.name + version_description
