@@ -14,10 +14,8 @@ class StockInventoryProductVersionReport(models.Model):
     location_id = fields.Many2one(comodel_name="stock.location",
                                   name="Location")
     product_qty = fields.Float(string="Qty")
-    real_in_product_qty = fields.Float(string="Real in Qty")
-    real_out_product_qty = fields.Float(string="Real out Qty")
-    virtual_in_product_qty = fields.Float(string="Virtual in Qty")
-    virtual_out_product_qty = fields.Float(string="Virtual out Qty")
+    real_product_qty = fields.Float(string="Real Qty")
+    virtual_product_qty = fields.Float(string="Virtual Qty")
     sale_id = fields.Many2one(comodel_name='sale.order.line',
                                   string='Sale')
     purchase_id = fields.Many2one(comodel_name='purchase.order.line',
@@ -37,8 +35,8 @@ class StockInventoryProductVersionReport(models.Model):
                 ml.product_version_id as product_version_id,
                 ml.location_id,
                 sum(ml.real_stock + ml.virtual_stock) as product_qty,
-                sum(ml.real_stock) as real_in_product_qty,
-                sum(ml.virtual_stock) as virtual_in_product_qty
+                sum(ml.real_stock) as real_product_qty,
+                sum(ml.virtual_stock) as virtual_product_qty
             FROM
                 stock_move as ml
             GROUP BY
