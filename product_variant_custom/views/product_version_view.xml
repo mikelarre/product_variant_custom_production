@@ -9,7 +9,6 @@
                     <field name="name"/>
                     <field name="product_id"/>
                     <field name="partner_id"/>
-                    <filter string="Can be Sold" name="filter_to_sell" domain="[('product_id.sale_ok','=',True)]"/>
                 </search>
             </field>
         </record>
@@ -22,7 +21,7 @@
                     <field name="name"/>
                     <field name="product_id"/>
                     <field name="partner_id"/>
-                    <field name="custom_value_ids"/>
+                    <field name="custom_value_ids" widget="many2many_tags"/>
                 </tree>
             </field>
         </record>
@@ -42,17 +41,6 @@
                     </group>
                 </form>
             </field>
-        </record>
-
-        <record id="product_version_action_sell" model="ir.actions.act_window">
-            <field name="name">Product Versions</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">product.version</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_type">form</field>
-            <field name="context">{"search_default_filter_to_sell":1}</field>
-            <field name="view_id" ref="product_version_view_tree"/>
-            <field name="search_view_id" ref="product_version_view_search"/>
         </record>
 
         <record model="ir.ui.view" id="product_version_line_tree">

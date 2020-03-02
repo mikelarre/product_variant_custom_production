@@ -1,21 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
-            <record model="ir.ui.view" id="product_version_view_form">
-            <field name="name">product.version.view.form</field>
-            <field name="model">product.version</field>
-            <field name="arch" type="xml">
-                <form string="Product Version">
-                    <group colspan="4">
-                        <field name="name" required="1" colspan="2"/>
-                        <field name="product_id" required="1" colspan="2"/>
-                        <field name="partner_id" colspan="2"/>
-                    </group>
-                    <group colspan="4">
-                        <field name="custom_value_ids" nolabel="1"/>
-                    </group>
-                </form>
-            </field>
-        </record>
+
         <record model="ir.ui.view" id="stock_product_version_form">
             <field name="name">stock.product.version.form</field>
             <field name="model">product.version</field>
@@ -31,4 +16,17 @@
             </field>
         </record>
 
+        <record model="ir.ui.view" id="stock_product_version_view_tree">
+            <field name="name">stock.product.version.view.tree</field>
+            <field name="model">product.version</field>
+            <field name="inherit_id" ref="product_variant_custom.product_version_view_tree" />
+            <field name="arch" type="xml">
+                <field name="partner_id" position="after">
+                    <field name="initial_stock" />
+                    <field name="initial_stock_date" />
+                    <field name="real_stock" />
+                    <field name="virtual_stock" />
+                </field>
+            </field>
+        </record>
 </openerp>

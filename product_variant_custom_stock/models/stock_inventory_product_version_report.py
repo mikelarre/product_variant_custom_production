@@ -22,6 +22,7 @@ class StockInventoryProductVersionReport(models.Model):
                                 string='Purchase')
     mrp_id = fields.Many2one(comodel_name='mrp.production',
                              string='Production')
+    product_id = fields.Many2one(comodel_name='product.product')
 
     @api.model_cr
     def init(self):
@@ -33,6 +34,7 @@ class StockInventoryProductVersionReport(models.Model):
             SELECT
                 min(ml.id) as id,
                 ml.product_version_id as product_version_id,
+                ml.product_id as product_id,
                 ml.location_id,
                 sum(ml.real_stock + ml.virtual_stock) as product_qty,
                 sum(ml.real_stock) as real_product_qty,
@@ -40,7 +42,7 @@ class StockInventoryProductVersionReport(models.Model):
             FROM
                 stock_move as ml
             GROUP BY
-                ml.product_version_id, ml.location_id)""")
+                ml.product_id, ml.product_version_id, ml.location_id)""")
 
     # @api.model_cr
     # def init(self):

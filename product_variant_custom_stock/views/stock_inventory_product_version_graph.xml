@@ -6,6 +6,7 @@
             <field name="arch" type="xml">
                 <graph type="pivot" string="Inventory pivot">
                     <field name="product_version_id" type="row"/>
+                    <field name="product_id" type="row"/>
                     <field name="real_product_qty" type="measure"/>
                     <field name="virtual_product_qty" type="measure"/>
                     <field name="product_qty" type="measure"/>

@@ -21,11 +21,11 @@ class StockMove(models.Model):
     product_version_id = fields.Many2one(comodel_name="product.version",
                                          name="Product Version",
                                          compute="_compute_product_version",
-                                         store="True")
+                                         store=True)
     real_stock = fields.Float(string="Real In",
-                           compute="_compute_move_in_out_qty", store="True")
+                           compute="_compute_move_in_out_qty", store=True)
     virtual_stock = fields.Float(string="Virtual In",
-                              compute="_compute_move_in_out_qty", store="True")
+                              compute="_compute_move_in_out_qty", store=True)
 
 
     def _calculate_qty_available(self, domain_move_in_loc, domain_move_out_loc):
