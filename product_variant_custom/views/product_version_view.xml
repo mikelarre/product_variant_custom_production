@@ -18,8 +18,8 @@
             <field name="model">product.version</field>
             <field name="arch" type="xml">
                 <tree string="Product Version">
-                    <field name="name"/>
                     <field name="product_id"/>
+                    <field name="name"/>
                     <field name="partner_id"/>
                     <field name="custom_value_ids" widget="many2many_tags"/>
                 </tree>

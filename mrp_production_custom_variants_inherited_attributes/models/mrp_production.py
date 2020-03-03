@@ -66,7 +66,8 @@ class MrpProduction(models.Model):
             self.product_attribute_ids = \
                 product._get_product_attributes_values_dict()
             self.custom_value_ids = self._set_custom_lines()
-            self.product_version_id = False
+            version = self.product_id._find_version(self.custom_value_ids)
+            self.product_version_id = version
             self.routing_id = self.bom_id.routing_id.id or False
         return result
 
@@ -333,7 +334,8 @@ class MrpProductionProductLine(models.Model):
     def product_id_change(self):
         res = super().product_id_change()
         self.custom_value_ids = self._set_custom_lines()
-        self.product_version_id = False
+        version = self.product_id._find_version(self.custom_value_ids)
+        self.product_version_id = version
         return res
 
     def _set_custom_lines(self):

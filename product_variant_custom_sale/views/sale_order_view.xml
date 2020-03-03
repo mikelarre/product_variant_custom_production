@@ -56,7 +56,7 @@
     </record>
 
     <menuitem id="menu_product"
-              action="product_variant_custom.product_version_action_sell"
+              action="product_version_action_sell"
               name="Product Versions" parent="sale.product_menu_catalog"
               sequence="3" groups="base.group_no_one"/>
 
