@@ -54,6 +54,12 @@ class MrpProduction(models.Model):
         string='Product attributes', copy=True, readonly=True,
         states={'draft': [('readonly', False)]},)
 
+    def _delete_product_attribute_ids(self):
+        delete_values = []
+        for value in self.product_attribute_ids:
+            delete_values.append((2, value.id))
+        return delete_values
+
     @api.onchange('product_id')
     def onchange_product_id(self):
         result = super().onchange_product_id()
@@ -63,13 +69,21 @@ class MrpProduction(models.Model):
             if not self.bom_id:
                 self.bom_id = bom_obj._bom_find(
                     product_tmpl=product.product_tmpl_id)
+            self.product_attribute_ids = self._delete_product_attribute_ids()
             self.product_attribute_ids = \
                 product._get_product_attributes_values_dict()
+            self.custom_value_ids = self._delete_custom_lines()
             self.custom_value_ids = self._set_custom_lines()
             version = self.product_id._find_version(self.custom_value_ids)
             self.product_version_id = version
             self.routing_id = self.bom_id.routing_id.id or False
         return result
+
+    def _delete_custom_lines(self):
+        delete_values = []
+        for value in self.custom_value_ids:
+            delete_values.append((2, value.id))
+        return delete_values
 
     def _set_custom_lines(self):
         if self.product_version_id:
@@ -79,10 +93,9 @@ class MrpProduction(models.Model):
 
     @api.onchange('product_version_id')
     def product_version_id_change(self):
-        for value in self.custom_value_ids:
-            self.custom_value_ids = [(2, value)]
         if self.product_version_id:
             self.product_id = self.product_version_id.product_id
+        self.custom_value_ids = self._delete_custom_lines()
         self.custom_value_ids = self._set_custom_lines()
 
     @api.multi
@@ -114,6 +127,8 @@ class MrpProduction(models.Model):
                 self.product_attribute_ids = (
                     self.product_tmpl_id._get_product_attributes_dict())
             else:
+                self.product_attribute_ids = \
+                    self._delete_product_attribute_ids()
                 self.product_attribute_ids = (
                     self.product_id._get_product_attributes_values_dict())
             self.bom_id = self.env['mrp.bom']._bom_find(
@@ -332,7 +347,7 @@ class MrpProductionProductLine(models.Model):
 
     @api.onchange('product_id')
     def product_id_change(self):
-        res = super().product_id_change()
+        res = super()._onchange_product_id()
         self.custom_value_ids = self._set_custom_lines()
         version = self.product_id._find_version(self.custom_value_ids)
         self.product_version_id = version
@@ -363,8 +378,7 @@ class MrpProductionProductLine(models.Model):
                     product_id._get_product_attributes_values_dict())
             else:
                 product_attributes = (
-                    self.product_tmpl_id._get_product_attributes_inherit_dict(
-                        self.production_id.product_attributes))
+                    self.product_tmpl_id._get_product_attributes_dict())
             self.name = product_id.name or self.product_tmpl_id.name
             self.product_uom = self.product_tmpl_id.uom_id
             self.product_id = product_id
