@@ -152,7 +152,15 @@ class MrpProduction(models.Model):
 
     @api.multi
     def _action_compute_lines(self):
-        results = self._action_compute_lines_variants()
+        params = self.env.context.get('params', {})
+        print(self.env.context)
+        if not (params and params.get('model') and params.get('id')):
+            params.update({
+                'model': 'mrp.production',
+                'id': self.id,
+            })
+        results = self.with_context(
+            params=params)._action_compute_lines_variants()
         return results
 
     @api.multi
