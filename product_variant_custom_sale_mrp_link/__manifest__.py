@@ -11,7 +11,6 @@
     "website": "http://www.avanzosc.es",
     "category": "",
     "data": [
-         ""
     ],
     'demo': [],
     'installable': True,

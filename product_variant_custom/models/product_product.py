@@ -73,3 +73,29 @@ class ProductProduct(models.Model):
                 if len(custom_lines) == cont:
                     return version
         return False
+
+
+class MrpProductionAttribute(models.AbstractModel):
+    _name = 'product.attribute.line'
+
+    attribute_id = fields.Many2one(comodel_name='product.attribute',
+                                string='Attribute')
+    value_id = fields.Many2one(comodel_name='product.attribute.value',
+                               domain="[('attribute_id', '=', attribute_id),"
+                               "('id', 'in', possible_value_ids)]",
+                               string='Value')
+    possible_value_ids = fields.Many2many(
+        comodel_name='product.attribute.value',
+        compute='_get_possible_attribute_values')
+
+    @api.depends('attribute_id', 'mrp_production.product_tmpl_id',
+                 'mrp_production.product_tmpl_id.attribute_line_ids')
+    def _get_possible_attribute_values(self):
+        for attribute_value in self:
+            attr_values = attribute_value.env['product.attribute.value']
+            template = attribute_value.mrp_production.product_tmpl_id
+            for attr_line in template.attribute_line_ids:
+                if attr_line.attribute_id.id == \
+                        attribute_value.attribute_id.id:
+                    attr_values |= attr_line.value_ids
+            attribute_value.possible_value_ids = attr_values.sorted()

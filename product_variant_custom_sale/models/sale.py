@@ -45,6 +45,10 @@ class SaleOrderLine(models.Model):
 
     product_version_id = fields.Many2one(comodel_name="product.version",
                                          name="Product Version")
+    product_attribute_ids = fields.One2many(
+        comodel_name='sale.line.attribute', inverse_name='sale_line_id',
+        string='Product attributes', copy=True, readonly=True,
+        states={'draft': [('readonly', False)]},)
     version_value_ids = fields.One2many(
         comodel_name="product.version.line",
         related="product_version_id.custom_value_ids")
@@ -81,6 +85,13 @@ class SaleOrderLine(models.Model):
         if self.product_version_id:
             self.product_id = self.product_version_id.product_id
         self.custom_value_ids = self._set_custom_lines()
+
+class SaleLineAttribute(models.Model):
+    _name = 'sale.line.attribute'
+    _inherit = "product.attribute.line"
+
+    sale_line_id = fields.Many2one(comodel_name='mrp.production',
+                                     string='Manufacturing Order')
 
 
 class SaleVersionCustomLine(models.Model):

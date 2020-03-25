@@ -29,6 +29,30 @@ class ProductVersion(models.Model):
                 }))
         return lines
 
+    @api.multi
+    def get_version_dict(self, product_id, custom_lines):
+        name = ""
+        custom_value_ids = []
+        for custom in custom_lines:
+            if custom.custom_value:
+                custom_value_ids.append((0, 0, {
+                    'attribute_id': custom.attribute_id.id,
+                    'value_id': custom.value_id.id,
+                    'custom_value': custom.custom_value,
+                }))
+                if name:
+                    name = "{}, ({}):{}".format(
+                        name, custom.value_id.name, custom.custom_value
+                    )
+                else:
+                    name = "({}):{}".format(
+                        custom.value_id.name, custom.custom_value)
+        return {
+            'product_id': product_id,
+            'name': name,
+            'custom_value_ids': custom_value_ids,
+        }
+
 
 class ProductVersionLine(models.Model):
     _name = "product.version.line"

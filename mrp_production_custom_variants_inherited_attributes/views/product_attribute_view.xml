@@ -6,7 +6,7 @@
             <field name="model">product.attribute</field>
             <field name="inherit_id" ref="product.attribute_tree_view" />
             <field name="arch" type="xml">
-                <field name="name" position="before">
+                <field name="name" position="after">
                     <field name="parent_inherited" />
                 </field>
             </field>
@@ -17,7 +17,7 @@
             <field name="model">product.attribute</field>
             <field name="inherit_id" ref="product.product_attribute_view_form" />
             <field name="arch" type="xml">
-                <field name="name" position="before">
+                <field name="name" position="after">
                     <field name="parent_inherited" />
                 </field>
             </field>

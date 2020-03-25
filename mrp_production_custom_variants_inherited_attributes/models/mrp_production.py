@@ -7,30 +7,10 @@ from odoo import models, fields, api, exceptions, _
 
 class MrpProductionAttribute(models.Model):
     _name = 'mrp.production.attribute'
+    _inherit = "product.attribute.line"
 
     mrp_production = fields.Many2one(comodel_name='mrp.production',
                                      string='Manufacturing Order')
-    attribute_id = fields.Many2one(comodel_name='product.attribute',
-                                string='Attribute')
-    value_id = fields.Many2one(comodel_name='product.attribute.value',
-                               domain="[('attribute_id', '=', attribute_id),"
-                               "('id', 'in', possible_value_ids)]",
-                               string='Value')
-    possible_value_ids = fields.Many2many(
-        comodel_name='product.attribute.value',
-        compute='_get_possible_attribute_values')
-
-    @api.depends('attribute_id', 'mrp_production.product_tmpl_id',
-                 'mrp_production.product_tmpl_id.attribute_line_ids')
-    def _get_possible_attribute_values(self):
-        for attribute_value in self:
-            attr_values = attribute_value.env['product.attribute.value']
-            template = attribute_value.mrp_production.product_tmpl_id
-            for attr_line in template.attribute_line_ids:
-                if attr_line.attribute_id.id == \
-                        attribute_value.attribute_id.id:
-                    attr_values |= attr_line.value_ids
-            attribute_value.possible_value_ids = attr_values.sorted()
 
 
 class MrpProduction(models.Model):
@@ -53,6 +33,20 @@ class MrpProduction(models.Model):
         comodel_name='mrp.production.attribute', inverse_name='mrp_production',
         string='Product attributes', copy=True, readonly=True,
         states={'draft': [('readonly', False)]},)
+
+    def _all_custom_lines_filled(self):
+        for custom in self.custom_value_ids:
+            if not str(custom.custom_value) or custom.custom_value is None:
+                return False
+        return True
+
+    def create_product(self):
+        if self.product_id and not self.product_version_id and \
+                self._all_custom_lines_filled():
+            version_obj = self.env['product.version']
+            version_dict = self.product_version_id.get_version_dict()
+            self.product_version_id = version_obj.create(version_dict)
+
 
     def _delete_product_attribute_ids(self):
         delete_values = []
@@ -123,14 +117,10 @@ class MrpProduction(models.Model):
                 self.product_id = (
                     self.product_tmpl_id.product_variant_ids and
                     self.product_tmpl_id.product_variant_ids[0])
-            if not self.product_id:
-                self.product_attribute_ids = (
-                    self.product_tmpl_id._get_product_attributes_dict())
-            else:
-                self.product_attribute_ids = \
-                    self._delete_product_attribute_ids()
-                self.product_attribute_ids = (
-                    self.product_id._get_product_attributes_values_dict())
+            self.product_attribute_ids = \
+                self._delete_product_attribute_ids()
+            self.product_attribute_ids = (
+                self.product_id._get_product_attributes_values_dict())
             self.bom_id = self.env['mrp.bom']._bom_find(
                 product_tmpl=self.product_tmpl_id)
             self.routing_id = self.bom_id.routing_id
@@ -190,9 +180,9 @@ class MrpProduction(models.Model):
                     bom_id = bom_obj._bom_find(
                         product=production.product_id)
                 if bom_id:
-                    routing_id = bom_id.routing_id or False
+                    routing_id = bom_id.routing_id.id or False
                     self.write({'bom_id': bom_id.id,
-                                'routing_id': routing_id.id})
+                                'routing_id': routing_id})
             if not bom_id:
                 raise exceptions.Warning(
                     _('Error! Cannot find a bill of material for this'
@@ -286,6 +276,13 @@ class MrpProduction(models.Model):
                 raise exceptions.UserError(_("Scheduled lines checking error"))
         return super(MrpProduction,
                      self).button_confirm()
+
+    def _compute_product_uom_qty(self):
+        for production in self:
+            if production.state == 'draft' and not production.product_id:
+                production.product_uom_qty = production.product_qty
+            else:
+                super(MrpProduction, production)._compute_product_uom_qty()
 
 
 class MrpProductionProductLineAttribute(models.Model):
