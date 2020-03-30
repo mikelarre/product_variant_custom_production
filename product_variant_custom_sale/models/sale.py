@@ -43,6 +43,7 @@ class SaleOrder(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
+    product_tmpl_id = fields.Many2one(comodel_name="product.template")
     product_version_id = fields.Many2one(comodel_name="product.version",
                                          name="Product Version")
     product_attribute_ids = fields.One2many(
@@ -65,12 +66,17 @@ class SaleOrderLine(models.Model):
     #         attribute_ids = line.product_id.get_custom_attributes()
     #         line.possible_attribute_ids = [(6, 0, attribute_ids)]
 
-    @api.onchange('product_id')
-    def product_id_change(self):
-        res = super().product_id_change()
-        self.custom_value_ids = self._set_custom_lines()
-        self.product_version_id = False
-        return res
+    def _delete_product_attribute_ids(self):
+        delete_values = []
+        for value in self.product_attribute_ids:
+            delete_values.append((2, value.id))
+        return delete_values
+
+    def _delete_custom_lines(self):
+        delete_values = []
+        for value in self.custom_value_ids:
+            delete_values.append((2, value.id))
+        return delete_values
 
     def _set_custom_lines(self):
         if self.product_version_id:
@@ -78,20 +84,69 @@ class SaleOrderLine(models.Model):
         elif self.product_id:
             return self.product_id.get_custom_value_lines()
 
+
+    @api.multi
+    @api.onchange('product_tmpl_id')
+    def onchange_product_template(self):
+        self.ensure_one()
+        self.product_attribute_ids = \
+            self._delete_product_attribute_ids()
+        self.custom_value_ids = self._delete_custom_lines()
+        if self.product_tmpl_id:
+            self.product_uom = self.product_tmpl_id.uom_id
+            if (not self.product_tmpl_id.attribute_line_ids and
+                    not self.product_id):
+                self.product_id = (
+                        self.product_tmpl_id.product_variant_ids and
+                        self.product_tmpl_id.product_variant_ids[0])
+                self.product_attribute_ids = (
+                    self.product_id._get_product_attributes_values_dict())
+            self.product_attribute_ids = (
+                self.product_tmpl_id._get_product_attributes_dict())
+            return {'domain': {'product_id':
+                                   [('product_tmpl_id', '=',
+                                     self.product_tmpl_id.id)]}}
+        return {'domain': {}}
+
+    @api.onchange('product_id')
+    def onchange_product_id(self):
+        result = super().product_id_change()
+        self.custom_value_ids = self._delete_custom_lines()
+        self.product_attribute_ids = self._delete_product_attribute_ids()
+        if self.product_id:
+            product = self.product_id
+            self.product_attribute_ids = \
+                product._get_product_attributes_values_dict()
+
+            self.custom_value_ids = self._set_custom_lines()
+            version = self.product_id._find_version(self.custom_value_ids)
+            self.product_version_id = version
+        return result
+
+    @api.onchange('product_attribute_ids')
+    def onchange_product_attributes(self):
+        product_obj = self.env['product.product']
+        product_tmpl_id = self.product_tmpl_id
+        self.product_id = product_obj._product_find(self.product_tmpl_id,
+                                                    self.product_attribute_ids)
+        self.product_tmpl_id = product_tmpl_id
+
     @api.onchange('product_version_id')
     def product_version_id_change(self):
-        for value in self.custom_value_ids:
-            self.custom_value_ids = [(2, value)]
         if self.product_version_id:
             self.product_id = self.product_version_id.product_id
+        self.custom_value_ids = self._delete_custom_lines()
         self.custom_value_ids = self._set_custom_lines()
 
-class SaleLineAttribute(models.Model):
-    _name = 'sale.line.attribute'
-    _inherit = "product.attribute.line"
 
-    sale_line_id = fields.Many2one(comodel_name='mrp.production',
-                                     string='Manufacturing Order')
+
+
+class SaleLineAttribute(models.Model):
+    _inherit = "product.attribute.line"
+    _name = 'sale.line.attribute'
+
+    sale_line_id = fields.Many2one(comodel_name='sale.order.line',
+                                   string='Sale Order Line')
 
 
 class SaleVersionCustomLine(models.Model):

@@ -113,3 +113,20 @@ class VersionCustomLine(models.AbstractModel):
                 raise exceptions.UserError(_(
                     "Custom value is greater than maximum allowed for this "
                     "value"))
+
+    @api.multi
+    def copy_to(self, instance, field):
+        for line in instance[field]:
+            line.unlink()
+        copy_fields = []
+        for attribute_line in self:
+            copy_fields.append((0, 0, {
+                'attribute_id': attribute_line.attribute_id,
+                'value_id': attribute_line.value_id,
+                'custom_value': attribute_line.custom_value,
+            }))
+        instance[field] = copy_fields
+
+
+
+

@@ -11,6 +11,7 @@ class MrpProductionAttribute(models.Model):
 
     mrp_production = fields.Many2one(comodel_name='mrp.production',
                                      string='Manufacturing Order')
+    product_tmpl_id = fields.Many2one(related="mrp_production.product_tmpl_id")
 
 
 class MrpProduction(models.Model):
@@ -47,7 +48,6 @@ class MrpProduction(models.Model):
             version_dict = self.product_version_id.get_version_dict()
             self.product_version_id = version_obj.create(version_dict)
 
-
     def _delete_product_attribute_ids(self):
         delete_values = []
         for value in self.product_attribute_ids:
@@ -57,16 +57,18 @@ class MrpProduction(models.Model):
     @api.onchange('product_id')
     def onchange_product_id(self):
         result = super().onchange_product_id()
+        self.custom_value_ids = self._delete_custom_lines()
+        self.product_attribute_ids = self._delete_product_attribute_ids()
         if self.product_id:
             bom_obj = self.env['mrp.bom']
             product = self.product_id
             if not self.bom_id:
                 self.bom_id = bom_obj._bom_find(
                     product_tmpl=product.product_tmpl_id)
-            self.product_attribute_ids = self._delete_product_attribute_ids()
+
             self.product_attribute_ids = \
                 product._get_product_attributes_values_dict()
-            self.custom_value_ids = self._delete_custom_lines()
+
             self.custom_value_ids = self._set_custom_lines()
             version = self.product_id._find_version(self.custom_value_ids)
             self.product_version_id = version
@@ -110,6 +112,9 @@ class MrpProduction(models.Model):
     @api.onchange('product_tmpl_id')
     def onchange_product_template(self):
         self.ensure_one()
+        self.product_attribute_ids = \
+            self._delete_product_attribute_ids()
+        self.custom_value_ids = self._delete_custom_lines()
         if self.product_tmpl_id:
             self.product_uom = self.product_tmpl_id.uom_id
             if (not self.product_tmpl_id.attribute_line_ids and
@@ -117,10 +122,10 @@ class MrpProduction(models.Model):
                 self.product_id = (
                     self.product_tmpl_id.product_variant_ids and
                     self.product_tmpl_id.product_variant_ids[0])
-            self.product_attribute_ids = \
-                self._delete_product_attribute_ids()
+                self.product_attribute_ids = (
+                    self.product_id._get_product_attributes_values_dict())
             self.product_attribute_ids = (
-                self.product_id._get_product_attributes_values_dict())
+                self.product_tmpl_id._get_product_attributes_dict())
             self.bom_id = self.env['mrp.bom']._bom_find(
                 product_tmpl=self.product_tmpl_id)
             self.routing_id = self.bom_id.routing_id
@@ -286,20 +291,13 @@ class MrpProduction(models.Model):
 
 
 class MrpProductionProductLineAttribute(models.Model):
+    _inherit = 'product.attribute.line'
     _name = 'mrp.production.product.line.attribute'
 
     product_line = fields.Many2one(
         comodel_name='mrp.production.product.line',
         string='Product line')
-    attribute_id = fields.Many2one(comodel_name='product.attribute',
-                                string='Attribute')
-    value_id = fields.Many2one(comodel_name='product.attribute.value',
-                            domain="[('attribute_id', '=', attribute_id),"
-                            "('id', 'in', possible_value_ids)]",
-                            string='Value')
-    possible_value_ids = fields.Many2many(
-        comodel_name='product.attribute.value',
-        compute='_get_possible_attribute_values')
+    product_tmpl_id = fields.Many2one(related='product_line.product_tmpl_id')
 
     @api.one
     def _get_parent_value(self):
@@ -309,15 +307,39 @@ class MrpProductionProductLineAttribute(models.Model):
                 if attr_line.attribute_id == self.attribute_id:
                     self.value_id = attr_line.value_id
 
-    @api.one
-    @api.depends('attribute_id')
-    def _get_possible_attribute_values(self):
-        attr_values = self.env['product.attribute.value']
-        template = self.product_line.product_tmpl_id
-        for attr_line in template.attribute_line_ids:
-            if attr_line.attribute_id.id == self.attribute_id.id:
-                attr_values |= attr_line.value_ids
-        self.possible_value_ids = attr_values.sorted()
+# class MrpProductionProductLineAttribute(models.Model):
+#     _name = 'mrp.production.product.line.attribute'
+#
+#     product_line = fields.Many2one(
+#         comodel_name='mrp.production.product.line',
+#         string='Product line')
+#     attribute_id = fields.Many2one(comodel_name='product.attribute',
+#                                 string='Attribute')
+#     value_id = fields.Many2one(comodel_name='product.attribute.value',
+#                             domain="[('attribute_id', '=', attribute_id),"
+#                             "('id', 'in', possible_value_ids)]",
+#                             string='Value')
+#     possible_value_ids = fields.Many2many(
+#         comodel_name='product.attribute.value',
+#         compute='_get_possible_attribute_values')
+#
+#     @api.one
+#     def _get_parent_value(self):
+#         if self.attribute_id.parent_inherited:
+#             production = self.product_line.production_id
+#             for attr_line in production.product_attribute_ids:
+#                 if attr_line.attribute_id == self.attribute_id:
+#                     self.value_id = attr_line.value_id
+#
+#     @api.one
+#     @api.depends('attribute_id')
+#     def _get_possible_attribute_values(self):
+#         attr_values = self.env['product.attribute.value']
+#         template = self.product_line.product_tmpl_id
+#         for attr_line in template.attribute_line_ids:
+#             if attr_line.attribute_id.id == self.attribute_id.id:
+#                 attr_values |= attr_line.value_ids
+#         self.possible_value_ids = attr_values.sorted()
 
 
 class MrpProductionProductLine(models.Model):

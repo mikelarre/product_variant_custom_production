@@ -7,10 +7,16 @@
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='order_line']/form//field[@name='product_id']"
+                       position="before">
+                    <field name="product_tmpl_id"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/form//field[@name='product_id']"
                        position="after">
+                    <!--attrs="{'invisible':[('product_attribute_ids','=',[])]}"-->
+
                         <field name="product_attribute_ids"
 
-                               attrs="{'invisible':[('product_attribute_ids','=',[])]}"
+
                                options="{'no_create': True, 'no_delete': True}">
                             <tree create="0" delete="0" editable="1">
                                 <field name="attribute_id" />
@@ -18,21 +24,21 @@
                                 <field name="possible_value_ids" invisible="1" />
                             </tree>
                         </field>
-                    <field name="product_version_id"
-                           domain="[('product_id','=',product_id)]"/>
                     <field name="version_value_ids"
                            attrs="{'invisible': [('product_version_id','=',False)], 'readonly': 1}"/>
                     <!--<field name="possible_attribute_ids" invisible="1"/>-->
                     <field name="custom_value_ids"
                            attrs="{'invisible': [('product_version_id','!=',False)]}">
-                        <tree string="Product Version Line" editable="bottom"
-                              create="false">
-                            <!--<field name="attribute_id" domain="[('id', 'in', parent.possible_attribute_ids[0][2])]"/>-->
-                            <field name="attribute_id"/>
-                            <field name="value_id"
-                                   domain="[('attribute_id','=',attribute_id)]"/>
-                            <field name="custom_value"/>
-                        </tree>
+                    <field name="product_version_id"
+                           domain="[('product_id','=',product_id)]"/>
+                    <tree string="Product Version Line" editable="bottom"
+                          create="false">
+                        <!--<field name="attribute_id" domain="[('id', 'in', parent.possible_attribute_ids[0][2])]"/>-->
+                        <field name="attribute_id"/>
+                        <field name="value_id"
+                               domain="[('attribute_id','=',attribute_id)]"/>
+                        <field name="custom_value"/>
+                    </tree>
                     </field>
                 </xpath>
                 <xpath

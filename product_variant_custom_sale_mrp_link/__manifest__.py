@@ -5,12 +5,16 @@
     "version": "12.0.1.0.0",
     "license": "AGPL-3",
     "depends": [
-        "sale_mrp_link", "product_variant_custom",
+        "sale_mrp_link",
+        "product_variant_custom",
+        #"product_variant_custom_sale",
+        #"mrp_production_custom_variants_inherited_attributes",
     ],
     "author": "AvanzOSC",
     "website": "http://www.avanzosc.es",
     "category": "",
     "data": [
+        "views/sale_order_line_view.xml",
     ],
     'demo': [],
     'installable': True,

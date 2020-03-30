@@ -75,9 +75,10 @@ class ProductProduct(models.Model):
         return False
 
 
-class MrpProductionAttribute(models.AbstractModel):
+class ProductAttributeLine(models.AbstractModel):
     _name = 'product.attribute.line'
 
+    product_tmpl_id = fields.Many2one(comodel_name="product.template")
     attribute_id = fields.Many2one(comodel_name='product.attribute',
                                 string='Attribute')
     value_id = fields.Many2one(comodel_name='product.attribute.value',
@@ -88,14 +89,27 @@ class MrpProductionAttribute(models.AbstractModel):
         comodel_name='product.attribute.value',
         compute='_get_possible_attribute_values')
 
-    @api.depends('attribute_id', 'mrp_production.product_tmpl_id',
-                 'mrp_production.product_tmpl_id.attribute_line_ids')
+    @api.depends('attribute_id', 'product_tmpl_id',
+                 'product_tmpl_id.attribute_line_ids')
     def _get_possible_attribute_values(self):
         for attribute_value in self:
             attr_values = attribute_value.env['product.attribute.value']
-            template = attribute_value.mrp_production.product_tmpl_id
+            template = attribute_value.product_tmpl_id
             for attr_line in template.attribute_line_ids:
                 if attr_line.attribute_id.id == \
                         attribute_value.attribute_id.id:
                     attr_values |= attr_line.value_ids
             attribute_value.possible_value_ids = attr_values.sorted()
+
+    @api.multi
+    def copy_to(self, instance, field):
+        for line in instance[field]:
+            line.unlink()
+        copy_fields = []
+        for attribute_line in self:
+            copy_fields.append((0, 0, {
+                'attribute_id': attribute_line.attribute_id,
+                'value_id': attribute_line.value_id,
+                'possible_value_ids': attribute_line.possible_value_ids,
+            }))
+        instance[field] = copy_fields

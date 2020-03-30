@@ -6,7 +6,7 @@ from odoo import api, fields, models, exceptions, _
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
-    def _action_create_mrp_dict(self):
+    def _action_mrp_dict(self):
         if not self.product_id:
             raise exceptions.Warning(_("select a product before create a "
                                        "manufaturing order"))
@@ -18,3 +18,14 @@ class SaleOrderLine(models.Model):
             self.product_id._get_product_attributes_values_dict()
         res['custom_value_ids'] = self._set_custom_lines()
         return res
+
+    @api.multi
+    def button_copy_product_to_mrp(self):
+        for sale_line in self:
+            production_id = sale_line.mrp_production_id
+            if production_id:
+                sale_line.custom_value_ids.copy_to(production_id,
+                                                   'custom_value_ids')
+                sale_line.product_attribute_ids.copy_to(production_id,
+                                                        'product_attribute_ids')
+
