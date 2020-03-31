@@ -29,6 +29,7 @@
                                 <field name="possible_value_ids" invisible="1" />
                             </tree>
                         </field>
+                    <field name="product_version_id" invisible="True"/>
                     <field name="version_value_ids"
                            attrs="{'invisible': [('product_version_id','=',False)], 'readonly': 1}"/>
                     <!--<field name="possible_attribute_ids" invisible="1"/>-->
