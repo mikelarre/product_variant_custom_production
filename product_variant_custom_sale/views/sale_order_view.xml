@@ -10,6 +10,11 @@
                        position="before">
                     <field name="product_tmpl_id"/>
                 </xpath>
+                <xpath
+                        expr="//field[@name='order_line']/tree//field[@name='product_id']"
+                        position="after">
+                    <field name="product_version_id"/>
+                </xpath>
                 <xpath expr="//field[@name='order_line']/form//field[@name='product_id']"
                        position="after">
                     <!--attrs="{'invisible':[('product_attribute_ids','=',[])]}"-->
@@ -41,11 +46,7 @@
                     </tree>
                     </field>
                 </xpath>
-                <xpath
-                        expr="//field[@name='order_line']/tree//field[@name='product_id']"
-                        position="after">
-                    <field name="product_version_id"/>
-                </xpath>
+
             </field>
         </record>
 

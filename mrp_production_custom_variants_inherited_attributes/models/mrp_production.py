@@ -197,7 +197,8 @@ class MrpProduction(models.Model):
             factor = uom_id._compute_quantity(production.product_qty,
                                               bom_id.product_uom_id)
             # product_lines, workcenter_lines
-            results, results2 = bom_id.explode(production.product_id,
+            results, results2 = bom_id.with_context(
+                production=production).explode(production.product_id,
                 factor / bom_id.product_qty)
 
             #  reset product_lines in production order

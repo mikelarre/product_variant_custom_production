@@ -10,12 +10,12 @@ class SaleOrderLine(models.Model):
         if not self.product_id:
             raise exceptions.Warning(_("select a product before create a "
                                        "manufaturing order"))
-        if self.custom_value_lines and not self.product_version_id:
-            raise exceptions.Warning(_("select a version before create a "
-                                       "manufaturing order"))
+        # if self.custom_value_ids and not self.product_version_id:
+        #     raise exceptions.Warning(_("select a version before create a "
+        #                                "manufaturing order"))
         res = super()._action_mrp_dict()
-        res['product_attribute_ids'] = \
-            self.product_id._get_product_attributes_values_dict()
+        res['product_attribute_ids'] = [(0, 0, x) for x in
+            self.product_id._get_product_attributes_values_dict()]
         res['custom_value_ids'] = self._set_custom_lines()
         return res
 
