@@ -24,6 +24,8 @@ class SaleOrderLine(models.Model):
         for sale_line in self:
             production_id = sale_line.mrp_production_id
             if production_id:
+                production_id.product_tmpl_id = sale_line.product_tmpl_id
+                production_id.product_id = sale_line.product_id
                 sale_line.custom_value_ids.copy_to(production_id,
                                                    'custom_value_ids')
                 sale_line.product_attribute_ids.copy_to(production_id,

@@ -20,7 +20,7 @@ class MrpProduction(models.Model):
     product_id = fields.Many2one(required=False)
     product_tmpl_id = fields.Many2one(
         comodel_name='product.template', string='Product', readonly=True,
-        states={'draft': [('readonly', False)]})
+        related=False, states={'draft': [('readonly', False)]})
     product_version_id = fields.Many2one(comodel_name="product.version",
                                          name="Product Version")
     version_value_ids = fields.One2many(
@@ -34,6 +34,11 @@ class MrpProduction(models.Model):
         comodel_name='mrp.production.attribute', inverse_name='mrp_production',
         string='Product attributes', copy=True, readonly=True,
         states={'draft': [('readonly', False)]},)
+
+    def write(self, values):
+        res = super().write(values)
+        return res
+
 
     def _all_custom_lines_filled(self):
         for custom in self.custom_value_ids:

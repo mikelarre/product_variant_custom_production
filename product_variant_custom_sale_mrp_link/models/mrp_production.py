@@ -11,6 +11,8 @@ class MrpProduction(models.Model):
         for mo in self:
             sale_line_id = mo.sale_line_id
             if sale_line_id:
+                sale_line_id.product_tmpl_id = mo.product_tmpl_id
+                sale_line_id.product_id = mo.product_id
                 mo.custom_value_ids.copy_to(sale_line_id,
                                             'custom_value_ids')
                 mo.product_attribute_ids.copy_to(sale_line_id,

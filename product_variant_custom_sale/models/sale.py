@@ -65,7 +65,11 @@ class SaleOrderLine(models.Model):
     #     for line in self:
     #         attribute_ids = line.product_id.get_custom_attributes()
     #         line.possible_attribute_ids = [(6, 0, attribute_ids)]
-
+    _sql_constraints = [
+        ('accountable_required_fields',
+            "CHECK(display_type IS NOT NULL OR (product_uom IS NOT NULL))",
+            "Missing required fields on accountable sale order line."),
+    ]
     def _delete_product_attribute_ids(self):
         delete_values = []
         for value in self.product_attribute_ids:
@@ -145,6 +149,7 @@ class SaleLineAttribute(models.Model):
     _inherit = "product.attribute.line"
     _name = 'sale.line.attribute'
 
+    product_tmpl_id = fields.Many2one(related='sale_line_id.product_tmpl_id')
     sale_line_id = fields.Many2one(comodel_name='sale.order.line',
                                    string='Sale Order Line')
 

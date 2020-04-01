@@ -89,17 +89,21 @@ class ProductAttributeLine(models.AbstractModel):
         comodel_name='product.attribute.value',
         compute='_get_possible_attribute_values')
 
+    def _get_possible_values(self):
+        attr_values = self.env['product.attribute.value']
+        template = self.product_tmpl_id
+        for attr_line in template.attribute_line_ids:
+            if attr_line.attribute_id.id == \
+                    self.attribute_id.id:
+                attr_values |= attr_line.value_ids
+        return attr_values.sorted()
+
     @api.depends('attribute_id', 'product_tmpl_id',
                  'product_tmpl_id.attribute_line_ids')
     def _get_possible_attribute_values(self):
         for attribute_value in self:
-            attr_values = attribute_value.env['product.attribute.value']
-            template = attribute_value.product_tmpl_id
-            for attr_line in template.attribute_line_ids:
-                if attr_line.attribute_id.id == \
-                        attribute_value.attribute_id.id:
-                    attr_values |= attr_line.value_ids
-            attribute_value.possible_value_ids = attr_values.sorted()
+            attribute_value.possible_value_ids = \
+                attribute_value._get_possible_values()
 
     @api.multi
     def copy_to(self, instance, field):
