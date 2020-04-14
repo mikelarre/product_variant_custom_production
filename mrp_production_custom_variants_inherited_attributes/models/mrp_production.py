@@ -39,6 +39,14 @@ class MrpProduction(models.Model):
         res = super().write(values)
         return res
 
+    def _generate_raw_moves(self):
+        self.ensure_one()
+        moves = self.env['stock.move']
+        for line in self.product_line_ids:
+            if line.product_id.type in ('consu', 'product'):
+                data = self._get_raw_move_dict(line)
+                moves += moves.create(data)
+        return moves
 
     def _all_custom_lines_filled(self):
         for custom in self.custom_value_ids:
