@@ -242,7 +242,7 @@ class MrpProduction(models.Model):
         if not self.product_id:
             product_obj = self.env['product.product']
             att_values_ids = [
-                attr_line.value and attr_line.value.id or False
+                attr_line.value_id and attr_line.value_id.id or False
                 for attr_line in self.product_attribute_ids]
             domain = [('product_tmpl_id', '=', self.product_tmpl_id.id)]
             for value in att_values_ids:
