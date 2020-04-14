@@ -7,9 +7,9 @@ class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
     def _action_mrp_dict(self):
-        if not self.product_id:
-            raise exceptions.Warning(_("select a product before create a "
-                                       "manufaturing order"))
+#        if not self.product_id:
+#            raise exceptions.Warning(_("select a product before create a "
+#                                       "manufaturing order"))
         # if self.custom_value_ids and not self.product_version_id:
         #     raise exceptions.Warning(_("select a version before create a "
         #                                "manufaturing order"))
