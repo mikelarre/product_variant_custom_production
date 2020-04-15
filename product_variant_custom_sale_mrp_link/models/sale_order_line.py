@@ -38,9 +38,18 @@ class SaleOrderLine(models.Model):
     def _action_launch_stock_rule(self):
         for line in self:
             if not line.mrp_production_id:
-                super().with_context(extra_fields={
-                    'product_version_id': self.product_version_id.id,
-                    'product_attribute_ids':1,
-                    'custom_value_ids': 1,
-                })._action_launch_stock_rule()
+                custom_value_ids = []
+                for custom in line.custom_value_ids:
+                    if custom.custom_value:
+                        custom_value_ids.append((0, 0, {
+                            'attribute_id': custom.attribute_id.id,
+                            'value_id': custom.value_id.id,
+                            'custom_value': custom.custom_value,
+                        }))
+                super(SaleOrderLine, line.with_context(extra_fields={
+                    'product_version_id': line.product_version_id.id,
+                    'product_attribute_ids':
+                        line.product_id.get_custom_value_lines(),
+                    'custom_value_ids': custom_value_ids,
+                }))._action_launch_stock_rule()
         return True
