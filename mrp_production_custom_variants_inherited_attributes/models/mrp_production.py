@@ -222,7 +222,7 @@ class MrpProduction(models.Model):
                                  list(map(lambda x: x[2],
                                           line['product_attribute_ids']))) \
                              or product_obj
-                product_tmpl_id = done_line.product_tmpl_id
+                product_tmpl_id = product_id.product_tmpl_id
                 production_product_line = {
                     'name': product_id.name or done_line.product_tmpl_id.name,
                     'production_id': production.id,
