@@ -19,6 +19,7 @@ class SaleOrderLine(models.Model):
             'value_id': x.value_id.id
         }) for x in self.product_attribute_ids]
         res['custom_value_ids'] = self._set_custom_lines()
+        res['product_version_id'] = self.product_version_id.id
         return res
 
     @api.multi
@@ -31,8 +32,8 @@ class SaleOrderLine(models.Model):
                 sale_line.custom_value_ids.copy_to(production_id,
                                                    'custom_value_ids')
                 sale_line.product_attribute_ids.copy_to(production_id,
-                                                        'product_attribute_ids')
-
+                                                        'product_attribute_ids'
+                                                        )
 
     @api.multi
     def _action_launch_stock_rule(self):
