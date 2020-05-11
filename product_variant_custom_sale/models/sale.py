@@ -143,8 +143,6 @@ class SaleOrderLine(models.Model):
         self.custom_value_ids = self._set_custom_lines()
 
 
-
-
 class SaleLineAttribute(models.Model):
     _inherit = "product.attribute.line"
     _name = 'sale.line.attribute'

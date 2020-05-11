@@ -42,8 +42,14 @@ class PurchaseOrder(models.Model):
 class PurchaseOrder(models.Model):
     _inherit = "purchase.order.line"
 
+    product_tmpl_id = fields.Many2one(comodel_name="product.template")
     product_version_id = fields.Many2one(comodel_name="product.version",
                                          name="Product Version")
+    product_attribute_ids = fields.One2many(
+        comodel_name='purchase.line.attribute',
+        inverse_name='purchase_line_id',
+        string='Product attributes', copy=True, readonly=True,
+        states={'draft': [('readonly', False)]},)
     version_value_ids = fields.One2many(
         comodel_name="product.version.line",
         related="product_version_id.custom_value_ids")
@@ -51,13 +57,17 @@ class PurchaseOrder(models.Model):
         comodel_name="purchase.version.custom.line", string="Custom Values",
         inverse_name="line_id", copy=True)
 
-    @api.onchange('product_id')
-    def onchange_product_id(self):
-        res = super().onchange_product_id()
-        self.custom_value_ids = self._set_custom_lines()
-        self.product_version_id = False
-        self.name = self._get_purchase_line_description()
-        return res
+    def _delete_product_attribute_ids(self):
+        delete_values = []
+        for value in self.product_attribute_ids:
+            delete_values.append((2, value.id))
+        return delete_values
+
+    def _delete_custom_lines(self):
+        delete_values = []
+        for value in self.custom_value_ids:
+            delete_values.append((2, value.id))
+        return delete_values
 
     def _set_custom_lines(self):
         if self.product_version_id:
@@ -65,6 +75,51 @@ class PurchaseOrder(models.Model):
         elif self.product_id:
             return self.product_id.get_custom_value_lines()
 
+    @api.multi
+    @api.onchange('product_tmpl_id')
+    def onchange_product_template(self):
+        self.ensure_one()
+        self.product_attribute_ids = \
+            self._delete_product_attribute_ids()
+        self.custom_value_ids = self._delete_custom_lines()
+        if self.product_tmpl_id:
+            self.product_uom = self.product_tmpl_id.uom_id
+            if (not self.product_tmpl_id.attribute_line_ids and
+                    not self.product_id):
+                self.product_id = (
+                        self.product_tmpl_id.product_variant_ids and
+                        self.product_tmpl_id.product_variant_ids[0])
+                self.product_attribute_ids = (
+                    self.product_id._get_product_attributes_values_dict())
+            self.product_attribute_ids = (
+                self.product_tmpl_id._get_product_attributes_dict())
+            return {'domain': {'product_id':
+                                   [('product_tmpl_id', '=',
+                                     self.product_tmpl_id.id)]}}
+        return {'domain': {}}
+
+    @api.onchange('product_id')
+    def onchange_product_id(self):
+        result = super().onchange_product_id()
+        self.custom_value_ids = self._delete_custom_lines()
+        self.product_attribute_ids = self._delete_product_attribute_ids()
+        if self.product_id:
+            product = self.product_id
+            self.product_attribute_ids = \
+                product._get_product_attributes_values_dict()
+
+            self.custom_value_ids = self._set_custom_lines()
+            version = self.product_id._find_version(self.custom_value_ids)
+            self.product_version_id = version
+        return result
+
+    @api.onchange('product_attribute_ids')
+    def onchange_product_attributes(self):
+        product_obj = self.env['product.product']
+        product_tmpl_id = self.product_tmpl_id
+        self.product_id = product_obj._product_find(self.product_tmpl_id,
+                                                    self.product_attribute_ids)
+        self.product_tmpl_id = product_tmpl_id
 
     def _get_purchase_line_description(self):
         if not self.product_id:
@@ -86,11 +141,10 @@ class PurchaseOrder(models.Model):
 
     @api.onchange('product_version_id')
     def product_version_id_change(self):
-        for value in self.custom_value_ids:
-            self.custom_value_ids = [(2, value)]
         if self.product_version_id:
             self.product_id = self.product_version_id.product_id
             self.name = self._get_purchase_line_description()
+        self.custom_value_ids = self._delete_custom_lines()
         self.custom_value_ids = self._set_custom_lines()
 
     @api.onchange('custom_value_ids')
@@ -99,6 +153,16 @@ class PurchaseOrder(models.Model):
             self.custom_value_ids)
         self.product_version_id = product_version
         self.name = self._get_purchase_line_description()
+
+
+class PurchaseLineAttribute(models.Model):
+    _inherit = "product.attribute.line"
+    _name = 'purchase.line.attribute'
+
+    product_tmpl_id = fields.Many2one(
+        related='purchase_line_id.product_tmpl_id')
+    purchase_line_id = fields.Many2one(comodel_name='purchase.order.line',
+                                       string='Purchase Order Line')
 
 
 class PurchaseVersionCustomLine(models.Model):
