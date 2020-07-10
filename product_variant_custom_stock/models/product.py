@@ -13,16 +13,21 @@ class ProductVersion(models.Model):
     virtual_stock = fields.Float(string="Virtual Stock",
                                  compute="_compute_version_stock")
 
+
+    # @api.depends("initial_stock")
+    # def _compute_version_stock(self):
+    #     for product in self:
+    #         product.real_stock_sum += product.real_stock + product.initial_stock
+    #         product.virtual_stock_sum += product.virtual_stock + product.initial_stock
+
+
     @api.depends("initial_stock", "initial_stock_date")
     def _compute_version_stock(self):
         move_obj = self.env['stock.move']
         for product in self:
             initial_date = fields.Datetime.to_string(
                 product.initial_stock_date)
-            domain = [('product_version_id', '=', product.id),
-                      ('state', 'in',
-                          ('waiting', 'confirmed', 'assigned',
-                           'partially_available'))]
+            domain = [('product_version_id', '=', product.id)]
             if initial_date:
                 domain.append(('date', '>=', initial_date))
             moves = move_obj.search(domain)

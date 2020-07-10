@@ -15,6 +15,7 @@ class StockLocation(models.Model):
         else:
             return self.location_id._has_parent(parent_location)
 
+
 class StockMove(models.Model):
     _inherit = "stock.move"
 
@@ -49,21 +50,24 @@ class StockMove(models.Model):
         location_obj = self.env['stock.location']
         physical_location = location_obj.search(
             [('name', '=', 'Physical Locations')])
-        virtual_location = location_obj.search(
-            [('name', '=', 'Virtual Locations')])
-        for move in self.filtered(
-                lambda x: x.state in ('waiting', 'confirmed', 'assigned',
-                                      'partially_available')):
-            initial_date = move.product_version_id.initial_stock_date
-            if not initial_date or move.date >= initial_date:
-                if move.location_dest_id._has_parent(physical_location):
+#        virtual_location = location_obj.search(
+#            [('name', '=', 'Virtual Locations')])
+        for move in self:
+            if move.product_version_id:
+                if move.location_dest_id._has_parent(physical_location) and move.state == "done":
                     move.real_stock = move.product_qty
-                elif move.location_id._has_parent(physical_location):
+                    move.virtual_stock = 0
+                elif move.location_id._has_parent(physical_location) and move.state == "done":
                     move.real_stock = -move.product_qty
-                elif move.location_dest_id._has_parent(virtual_location):
+                    move.virtual_stock = 0
+                elif move.location_dest_id._has_parent(physical_location) and move.state in ('waiting', 'confirmed', 'assigned',
+                           'partially_available'):
                     move.virtual_stock = move.product_qty
-                elif move.location_id._has_parent(virtual_location):
+                elif move.location_id._has_parent(physical_location) and move.state in ('waiting', 'confirmed', 'assigned',
+                           'partially_available'):
                     move.virtual_stock = -move.product_qty
+
+
         # for move in self:
         #     self.env['product.product']._get_domain_locations_new(move)
         # domain_quant_loc, domain_move_in_loc, domain_move_out_loc = self._get_domain_locations()
