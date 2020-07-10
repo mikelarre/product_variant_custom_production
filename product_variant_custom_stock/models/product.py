@@ -33,5 +33,4 @@ class ProductVersion(models.Model):
             moves = move_obj.search(domain)
             product.real_stock = sum(moves.mapped('real_stock')) + \
                                  product.initial_stock
-            product.virtual_stock = sum(moves.mapped('virtual_stock')) + \
-                                    product.initial_stock
+            product.virtual_stock = product.real_stock + sum(moves.mapped('virtual_stock'))
