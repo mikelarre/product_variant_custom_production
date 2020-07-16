@@ -137,6 +137,8 @@ class MrpBom(models.Model):
         if not production and active_model == 'mrp.production':
             production = self.env['mrp.production'].browse(
                 self.env.context.get('params').get('id'))
+        else:
+            production = self.env['mrp.production']
         tmpl_id = bom_line.product_tmpl_id
         if not bom_line.product_id:
             res['name'] = tmpl_id.name
