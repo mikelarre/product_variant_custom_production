@@ -158,15 +158,25 @@ class MrpProduction(models.Model):
                                                     self.product_attribute_ids)
         self.product_tmpl_id = product_tmpl_id
 
-    @api.multi
-    def _action_compute_lines(self):
+    def get_production_model_id(self):
         params = self.env.context.get('params', {})
-        print(self.env.context)
         if not (params and params.get('model') and params.get('id')):
             params.update({
                 'model': 'mrp.production',
                 'id': self.id,
             })
+        return params
+
+    @api.multi
+    def action_compute(self):
+        params = self.get_production_model_id()
+        results = self.with_context(
+            params=params).action_compute()
+        return results
+
+    @api.multi
+    def _action_compute_lines(self):
+        params = self.get_production_model_id()
         results = self.with_context(
             params=params)._action_compute_lines_variants()
         return results
