@@ -182,6 +182,13 @@ class MrpProduction(models.Model):
         return results
 
     @api.multi
+    def action_explode(self):
+        params = self.get_production_model_id()
+        results = self.with_context(
+            params=params).action_explode()
+        return results
+
+    @api.multi
     def _action_compute_lines_variants(self):
         """ Compute product_lines and workcenter_lines from BoM structure
         @return: product_lines
