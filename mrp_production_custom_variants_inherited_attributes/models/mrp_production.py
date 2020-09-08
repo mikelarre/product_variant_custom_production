@@ -168,17 +168,31 @@ class MrpProduction(models.Model):
         return params
 
     @api.multi
+    def button_plan(self):
+        params = self.get_production_model_id()
+        results = super(MrpProduction, self.with_context(
+            params=params)).button_plan()
+        return results
+
+    @api.multi
     def action_compute(self):
         params = self.get_production_model_id()
-        results = self.with_context(
-            params=params).action_compute()
+        results = super(MrpProduction, self.with_context(
+            params=params)).action_compute()
         return results
 
     @api.multi
     def _action_compute_lines(self):
         params = self.get_production_model_id()
-        results = self.with_context(
-            params=params)._action_compute_lines_variants()
+        results = super(MrpProduction, self.with_context(
+            params=params))._action_compute_lines()
+        return results
+
+    @api.multi
+    def action_explode(self):
+        params = self.get_production_model_id()
+        results = super(MrpProduction, self.with_context(
+            params=params)).action_explode()
         return results
 
     @api.multi
