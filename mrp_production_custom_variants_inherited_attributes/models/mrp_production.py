@@ -184,8 +184,8 @@ class MrpProduction(models.Model):
     @api.multi
     def _action_compute_lines(self):
         params = self.get_production_model_id()
-        results = super(MrpProduction, self.with_context(
-            params=params))._action_compute_lines()
+        results = self.with_context(
+            params=params)._action_compute_lines_variants()
         return results
 
     @api.multi
