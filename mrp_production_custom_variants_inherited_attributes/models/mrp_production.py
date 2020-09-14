@@ -54,12 +54,30 @@ class MrpProduction(models.Model):
                 return False
         return True
 
-    def create_product(self):
+    def _all_attribute_lines_filled(self):
+        for value in self.product_attribute_ids:
+            if not str(value.value_id):
+                return False
+        return True
+
+    def create_product_product(self):
+        product_obj = self.env['product.product']
+        product_id = product_obj._product_find(self.product_tmpl_id,
+                                               self.product_attribute_ids)
+        if not product_id and self._all_attribute_lines_filled():
+            product_dict = product_obj.get_product_dict(
+                self.product_tmpl_id, self.product_attribute_ids)
+            self.product_id = product_obj.create(product_dict)
+
+    def create_product_version(self):
         if self.product_id and not self.product_version_id and \
                 self._all_custom_lines_filled():
             version_obj = self.env['product.version']
-            version_dict = self.product_version_id.get_version_dict()
-            self.product_version_id = version_obj.create(version_dict)
+            version = self.product_id._find_version(self.custom_value_ids)
+            if not version:
+                version_dict = self.product_version_id.get_version_dict(
+                    self.product_id, self.custom_value_ids)
+                self.product_version_id = version_obj.create(version_dict)
 
     def _delete_product_attribute_ids(self):
         delete_values = []
@@ -410,6 +428,23 @@ class MrpProductionProductLine(models.Model):
     #     for line in self:
     #         attribute_ids = line.product_id.get_custom_attributes()
     #         line.possible_attribute_ids = [(6, 0, attribute_ids)]
+    ###########
+    ###########GENERIC#################
+    def _all_attribute_lines_filled(self):
+        for value in self.product_attribute_ids:
+            if not str(value.value_id):
+                return False
+        return True
+
+    def create_product_product(self):
+        product_obj = self.env['product.product']
+        product_id = product_obj._product_find(self.product_tmpl_id,
+                                               self.product_attribute_ids)
+        if not product_id and self._all_attribute_lines_filled():
+            product_dict = product_obj.get_product_dict(
+                self.product_tmpl_id, self.product_attribute_ids)
+            self.product_id = product_obj.create(product_dict)
+    #############################################
 
     @api.onchange('product_id')
     def product_id_change(self):
