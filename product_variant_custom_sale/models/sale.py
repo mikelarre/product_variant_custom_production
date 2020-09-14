@@ -88,8 +88,6 @@ class SaleOrderLine(models.Model):
         elif self.product_id:
             return self.product_id.get_custom_value_lines()
 
-
-    @api.multi
     @api.onchange('product_tmpl_id')
     def onchange_product_template(self):
         self.ensure_one()
