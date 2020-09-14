@@ -436,6 +436,14 @@ class MrpProductionProductLine(models.Model):
                 return False
         return True
 
+    def get_product_dict(self, tmpl_id, attributes):
+        values = attributes.mapped("value_id.id")
+        return {
+            'product_tmpl_id': tmpl_id.id,
+            'attribute_value_ids': [(6, 0, values)],
+            'active': tmpl_id.active,
+        }
+
     def create_product_product(self):
         product_obj = self.env['product.product']
         product_id = product_obj._product_find(self.product_tmpl_id,
