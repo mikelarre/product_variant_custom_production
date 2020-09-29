@@ -113,9 +113,9 @@ class SaleOrderLine(models.Model):
     @api.onchange('product_id')
     def onchange_product_id(self):
         result = super().product_id_change()
-        self.custom_value_ids = self._delete_custom_lines()
-        self.product_attribute_ids = self._delete_product_attribute_ids()
         if self.product_id:
+            self.custom_value_ids = self._delete_custom_lines()
+            self.product_attribute_ids = self._delete_product_attribute_ids()
             product = self.product_id
             self.product_attribute_ids = \
                 product._get_product_attributes_values_dict()

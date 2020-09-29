@@ -449,7 +449,7 @@ class MrpProductionProductLine(models.Model):
         product_id = product_obj._product_find(self.product_tmpl_id,
                                                self.product_attribute_ids)
         if not product_id and self._all_attribute_lines_filled():
-            product_dict = product_obj.get_product_dict(
+            product_dict = self.get_product_dict(
                 self.product_tmpl_id, self.product_attribute_ids)
             self.product_id = product_obj.create(product_dict)
     #############################################
