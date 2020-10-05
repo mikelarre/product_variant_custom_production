@@ -71,9 +71,9 @@ class MrpProduction(models.Model):
     @api.onchange('product_id')
     def onchange_product_id(self):
         result = super().onchange_product_id()
-        self.custom_value_ids = self._delete_custom_lines()
-        self.product_attribute_ids = self._delete_product_attribute_ids()
         if self.product_id:
+            self.custom_value_ids = self._delete_custom_lines()
+            self.product_attribute_ids = self._delete_product_attribute_ids()
             bom_obj = self.env['mrp.bom']
             product = self.product_id
             if not self.bom_id:
@@ -155,8 +155,12 @@ class MrpProduction(models.Model):
     def onchange_product_attributes(self):
         product_obj = self.env['product.product']
         product_tmpl_id = self.product_tmpl_id
-        self.product_id = product_obj._product_find(self.product_tmpl_id,
-                                                    self.product_attribute_ids)
+        product_id = product_obj._product_find(self.product_tmpl_id,
+                                               self.product_attribute_ids)
+        if product_id:
+            self.product_id = product_obj._product_find(
+                self.product_tmpl_id,
+                self.product_attribute_ids)
         self.product_tmpl_id = product_tmpl_id
 
     def get_production_model_id(self):
@@ -483,8 +487,12 @@ class MrpProductionProductLine(models.Model):
     def onchange_product_attributes(self):
         product_obj = self.env['product.product']
         product_tmpl_id = self.product_tmpl_id
-        self.product_id = product_obj._product_find(self.product_tmpl_id,
-                                                    self.product_attribute_ids)
+        product_id = product_obj._product_find(self.product_tmpl_id,
+                                               self.product_attribute_ids)
+        if product_id:
+            self.product_id = product_obj._product_find(
+                self.product_tmpl_id,
+                self.product_attribute_ids)
         self.product_tmpl_id = product_tmpl_id
 
 
