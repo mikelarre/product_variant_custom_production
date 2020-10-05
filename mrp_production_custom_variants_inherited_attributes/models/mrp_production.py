@@ -48,36 +48,19 @@ class MrpProduction(models.Model):
                 moves += moves.create(data)
         return moves
 
-    def _all_custom_lines_filled(self):
-        for custom in self.custom_value_ids:
-            if not str(custom.custom_value) or custom.custom_value is None:
-                return False
-        return True
-
-    def _all_attribute_lines_filled(self):
-        for value in self.product_attribute_ids:
-            if not str(value.value_id):
-                return False
-        return True
-
     def create_product_product(self):
         product_obj = self.env['product.product']
-        product_id = product_obj._product_find(self.product_tmpl_id,
-                                               self.product_attribute_ids)
-        if not product_id and self._all_attribute_lines_filled():
-            product_dict = product_obj.get_product_dict(
-                self.product_tmpl_id, self.product_attribute_ids)
-            self.product_id = product_obj.create(product_dict)
+        product_id = product_obj.create_product_product(
+            self.product_tmpl_id, self.product_attribute_ids)
+        if product_id:
+            self.product_id = product_id
 
     def create_product_version(self):
-        if self.product_id and not self.product_version_id and \
-                self._all_custom_lines_filled():
-            version_obj = self.env['product.version']
-            version = self.product_id._find_version(self.custom_value_ids)
-            if not version:
-                version_dict = self.product_version_id.get_version_dict(
-                    self.product_id, self.custom_value_ids)
-                self.product_version_id = version_obj.create(version_dict)
+        version_obj = self.env['product.version']
+        version_id = version_obj.create_product_version(
+            self.product_id, self.custom_value_ids)
+        if version_id:
+            self.version_id = version_id
 
     def _delete_product_attribute_ids(self):
         delete_values = []
@@ -430,37 +413,36 @@ class MrpProductionProductLine(models.Model):
     #         line.possible_attribute_ids = [(6, 0, attribute_ids)]
     ###########
     ###########GENERIC#################
-    def _all_attribute_lines_filled(self):
-        for value in self.product_attribute_ids:
-            if not str(value.value_id):
-                return False
-        return True
 
-    def get_product_dict(self, tmpl_id, attributes):
-        values = attributes.mapped("value_id.id")
-        return {
-            'product_tmpl_id': tmpl_id.id,
-            'attribute_value_ids': [(6, 0, values)],
-            'active': tmpl_id.active,
-        }
-
+    #############################################
     def create_product_product(self):
         product_obj = self.env['product.product']
-        product_id = product_obj._product_find(self.product_tmpl_id,
-                                               self.product_attribute_ids)
-        if not product_id and self._all_attribute_lines_filled():
-            product_dict = self.get_product_dict(
-                self.product_tmpl_id, self.product_attribute_ids)
-            self.product_id = product_obj.create(product_dict)
-    #############################################
+        product_id = product_obj.create_product_product(
+            self.product_tmpl_id, self.product_attribute_ids)
+        if product_id:
+            self.product_id = product_id
+
+    def create_product_version(self):
+        version_obj = self.env['product.version']
+        version_id = version_obj.create_product_version(
+            self.product_id, self.custom_value_ids)
+        if version_id:
+            self.version_id = version_id
 
     @api.onchange('product_id')
-    def product_id_change(self):
-        res = super()._onchange_product_id()
-        self.custom_value_ids = self._set_custom_lines()
-        version = self.product_id._find_version(self.custom_value_ids)
-        self.product_version_id = version
-        return res
+    def onchange_product_id(self):
+        result = super().product_id_change()
+        if self.product_id:
+            self.custom_value_ids = self._delete_custom_lines()
+            self.product_attribute_ids = self._delete_product_attribute_ids()
+            product = self.product_id
+            self.product_attribute_ids = \
+                product._get_product_attributes_values_dict()
+
+            self.custom_value_ids = self._set_custom_lines()
+            version = self.product_id._find_version(self.custom_value_ids)
+            self.product_version_id = version
+        return result
 
     def _set_custom_lines(self):
         if self.product_version_id:
@@ -470,34 +452,40 @@ class MrpProductionProductLine(models.Model):
 
     @api.onchange('product_version_id')
     def product_version_id_change(self):
-        for value in self.custom_value_ids:
-            self.custom_value_ids = [(2, value)]
         if self.product_version_id:
             self.product_id = self.product_version_id.product_id
+        self.custom_value_ids = self._delete_custom_lines()
         self.custom_value_ids = self._set_custom_lines()
 
     @api.onchange('product_tmpl_id')
     def onchange_product_template(self):
+        self.ensure_one()
+        self.product_attribute_ids = \
+            self._delete_product_attribute_ids()
+        self.custom_value_ids = self._delete_custom_lines()
         if self.product_tmpl_id:
-            product_id = self.env['product.product']
-            if not self.product_tmpl_id.attribute_line_ids:
-                product_id = (self.product_tmpl_id.product_variant_ids and
-                              self.product_tmpl_id.product_variant_ids[0])
-                product_attributes = (
-                    product_id._get_product_attributes_values_dict())
-            else:
-                product_attributes = (
-                    self.product_tmpl_id._get_product_attributes_dict())
-            self.name = product_id.name or self.product_tmpl_id.name
             self.product_uom = self.product_tmpl_id.uom_id
-            self.product_id = product_id
-            self.product_attribute_ids = product_attributes
+            if (not self.product_tmpl_id.attribute_line_ids and
+                    not self.product_id):
+                self.product_id = (
+                        self.product_tmpl_id.product_variant_ids and
+                        self.product_tmpl_id.product_variant_ids[0])
+                self.product_attribute_ids = (
+                    self.product_id._get_product_attributes_values_dict())
+            self.product_attribute_ids = (
+                self.product_tmpl_id._get_product_attributes_dict())
+            return {'domain': {'product_id':
+                                   [('product_tmpl_id', '=',
+                                     self.product_tmpl_id.id)]}}
+        return {'domain': {}}
 
     @api.onchange('product_attribute_ids')
     def onchange_product_attributes(self):
         product_obj = self.env['product.product']
-        self.product_id = product_obj._product_find(
-            self.product_tmpl_id, self.product_attribute_ids)
+        product_tmpl_id = self.product_tmpl_id
+        self.product_id = product_obj._product_find(self.product_tmpl_id,
+                                                    self.product_attribute_ids)
+        self.product_tmpl_id = product_tmpl_id
 
 
 class MrpProductionProductVersionCustomLine(models.Model):

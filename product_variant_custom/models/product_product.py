@@ -74,6 +74,27 @@ class ProductProduct(models.Model):
                     return version
         return False
 
+    def _all_attribute_lines_filled(self, attributes):
+        for value in attributes:
+            if not str(value.value_id):
+                return False
+        return True
+
+    def get_product_dict(self, tmpl_id, attributes):
+        values = attributes.mapped("value_id.id")
+        return {
+            'product_tmpl_id': tmpl_id.id,
+            'attribute_value_ids': [(6, 0, values)],
+            'active': tmpl_id.active,
+        }
+
+    def create_product_product(self, template=None, attributes=None):
+        if template and attributes:
+            product_id = self._product_find(template, attributes)
+            if not product_id and self._all_attribute_lines_filled(attributes):
+                product_dict = self.get_product_dict(template, attributes)
+                return self.create(product_dict)
+
 
 class ProductAttributeLine(models.AbstractModel):
     _name = 'product.attribute.line'

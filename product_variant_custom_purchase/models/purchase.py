@@ -101,9 +101,9 @@ class PurchaseOrder(models.Model):
     @api.onchange('product_id')
     def onchange_product_id(self):
         result = super().onchange_product_id()
-        self.custom_value_ids = self._delete_custom_lines()
-        self.product_attribute_ids = self._delete_product_attribute_ids()
         if self.product_id:
+            self.custom_value_ids = self._delete_custom_lines()
+            self.product_attribute_ids = self._delete_product_attribute_ids()
             product = self.product_id
             self.product_attribute_ids = \
                 product._get_product_attributes_values_dict()
@@ -153,6 +153,20 @@ class PurchaseOrder(models.Model):
             self.custom_value_ids)
         self.product_version_id = product_version
         self.name = self._get_purchase_line_description()
+
+    def create_product_product(self):
+        product_obj = self.env['product.product']
+        product_id = product_obj.create_product_product(
+            self.product_tmpl_id, self.product_attribute_ids)
+        if product_id:
+            self.product_id = product_id
+
+    def create_product_version(self):
+        version_obj = self.env['product.version']
+        version_id = version_obj.create_product_version(
+            self.product_id, self.custom_value_ids)
+        if version_id:
+            self.version_id = version_id
 
 
 class PurchaseLineAttribute(models.Model):

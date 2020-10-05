@@ -53,6 +53,21 @@ class ProductVersion(models.Model):
             'custom_value_ids': custom_value_ids,
         }
 
+    def _all_custom_lines_filled(self, custom_value_ids):
+        for custom in custom_value_ids:
+            if not str(custom.custom_value) or custom.custom_value is None:
+                return False
+        return True
+
+    def create_product_version(self, product_id=None, custom_value_ids=None):
+        if product_id and self._all_custom_lines_filled(custom_value_ids):
+            version_obj = self.env['product.version']
+            version = self.product_id._find_version(self.custom_value_ids)
+            if not version:
+                version_dict = self.product_version_id.get_version_dict(
+                    self.product_id, self.custom_value_ids)
+                return version_obj.create(version_dict)
+
 
 class ProductVersionLine(models.Model):
     _name = "product.version.line"
