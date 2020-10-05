@@ -113,9 +113,9 @@ class SaleOrderLine(models.Model):
     @api.onchange('product_id')
     def onchange_product_id(self):
         result = super().product_id_change()
-        self.custom_value_ids = self._delete_custom_lines()
-        self.product_attribute_ids = self._delete_product_attribute_ids()
         if self.product_id:
+            self.custom_value_ids = self._delete_custom_lines()
+            self.product_attribute_ids = self._delete_product_attribute_ids()
             product = self.product_id
             self.product_attribute_ids = \
                 product._get_product_attributes_values_dict()
@@ -133,12 +133,44 @@ class SaleOrderLine(models.Model):
                                                     self.product_attribute_ids)
         self.product_tmpl_id = product_tmpl_id
 
+    def _get_sale_line_description(self):
+        if not self.product_id:
+            return
+        product_lang = self.product_id.with_context(
+            lang=self.partner_id.lang,
+            partner_id=self.partner_id.id,
+        )
+        self.name = product_lang.display_name or ""
+        version_description = " "
+        for value_line in self.custom_value_ids:
+            if value_line.custom_value:
+                version_description += "[{}: {}({})]".format(
+                    value_line.attribute_id.name, value_line.value_id.name,
+                    value_line.custom_value)
+        if product_lang.description_sale:
+            self.name += '\n' + product_lang.description_sale
+        return self.name + version_description
+
     @api.onchange('product_version_id')
     def product_version_id_change(self):
         if self.product_version_id:
             self.product_id = self.product_version_id.product_id
         self.custom_value_ids = self._delete_custom_lines()
         self.custom_value_ids = self._set_custom_lines()
+
+    def create_product_product(self):
+        product_obj = self.env['product.product']
+        product_id = product_obj.create_product_product(
+            self.product_tmpl_id, self.product_attribute_ids)
+        if product_id:
+            self.product_id = product_id
+
+    def create_product_version(self):
+        version_obj = self.env['product.version']
+        version_id = version_obj.create_product_version(
+            self.product_id, self.custom_value_ids)
+        if version_id:
+            self.version_id = version_id
 
 
 class SaleLineAttribute(models.Model):
