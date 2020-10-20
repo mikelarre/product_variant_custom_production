@@ -11,6 +11,15 @@ class ProductProduct(models.Model):
     product_version_count = fields.Integer(string="Versions",
                                            compute="compute_product_versions")
 
+    def get_product_dict(self, tmpl_id, attributes):
+        values = attributes.mapped("value_id.id")
+        return {
+            'product_tmpl_id': tmpl_id.id,
+            'attribute_value_ids': [(6, 0, values)],
+            'active': tmpl_id.active,
+        }
+
+
     @api.depends('product_version_ids')
     def compute_product_versions(self):
         for product in self:

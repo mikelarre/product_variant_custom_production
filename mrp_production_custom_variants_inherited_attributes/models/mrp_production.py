@@ -87,9 +87,10 @@ class MrpProduction(models.Model):
     @api.onchange('product_id')
     def onchange_product_id(self):
         result = super().onchange_product_id()
-        self.custom_value_ids = self._delete_custom_lines()
-        self.product_attribute_ids = self._delete_product_attribute_ids()
         if self.product_id:
+            self.custom_value_ids = self._delete_custom_lines()
+            self.product_attribute_ids = self._delete_product_attribute_ids()
+        #if self.product_id:
             bom_obj = self.env['mrp.bom']
             product = self.product_id
             if not self.bom_id:
@@ -355,6 +356,7 @@ class MrpProductionProductLineAttribute(models.Model):
         string='Product line')
     product_tmpl_id = fields.Many2one(related='product_line.product_tmpl_id')
 
+
     @api.one
     def _get_parent_value(self):
         if self.attribute_id.parent_inherited:
@@ -427,14 +429,67 @@ class MrpProductionProductLine(models.Model):
     #     for line in self:
     #         attribute_ids = line.product_id.get_custom_attributes()
     #         line.possible_attribute_ids = [(6, 0, attribute_ids)]
+    def _all_attribute_lines_filled(self):
+        for value in self.product_attribute_ids:
+            if not str(value.value_id):
+                return False
+        return True
+
+    def get_product_dict(self, tmpl_id, attributes):
+        values = attributes.mapped("value_id.id")
+        return {
+            'product_tmpl_id': tmpl_id.id,
+            'attribute_value_ids': [(6, 0, values)],
+            'active': tmpl_id.active,
+        }
+
+    def create_product_product(self):
+        product_obj = self.env['product.product']
+        product_id = product_obj._product_find(self.product_tmpl_id,
+                                               self.product_attribute_ids)
+        if not product_id and self._all_attribute_lines_filled():
+            product_dict = product_obj.get_product_dict(
+                self.product_tmpl_id, self.product_attribute_ids)
+            self.product_id = product_obj.create(product_dict)
+
+
+    def _delete_product_attribute_ids(self):
+        delete_values = []
+        for value in self.product_attribute_ids:
+            delete_values.append((2, value.id))
+        return delete_values
 
     @api.onchange('product_id')
-    def product_id_change(self):
-        res = super()._onchange_product_id()
-        self.custom_value_ids = self._set_custom_lines()
-        version = self.product_id._find_version(self.custom_value_ids)
-        self.product_version_id = version
-        return res
+    def onchange_product_id(self):
+        result = super()._onchange_product_id()
+        if self.product_id:
+            self.custom_value_ids = self._delete_custom_lines()
+            self.product_attribute_ids = self._delete_product_attribute_ids()
+        #if self.product_id:
+            product = self.product_id
+
+            self.product_attribute_ids = \
+                product._get_product_attributes_values_dict()
+
+            self.custom_value_ids = self._set_custom_lines()
+            version = self.product_id._find_version(self.custom_value_ids)
+            self.product_version_id = version
+        return result
+
+    def _delete_custom_lines(self):
+        delete_values = []
+        for value in self.custom_value_ids:
+            delete_values.append((2, value.id))
+        return delete_values
+
+
+#    @api.onchange('product_id')
+#    def product_id_change(self):
+#        res = super()._onchange_product_id()
+#        self.custom_value_ids = self._set_custom_lines()
+#        version = self.product_id._find_version(self.custom_value_ids)
+#        self.product_version_id = version
+#        return res
 
     def _set_custom_lines(self):
         if self.product_version_id:

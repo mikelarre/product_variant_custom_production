@@ -35,6 +35,19 @@ class SaleOrderLine(models.Model):
                                                         'product_attribute_ids'
                                                         )
 
+    def get_product_dict(self, tmpl_id, attributes):
+        values = attributes.mapped("value_id.id")
+        return {
+            'product_tmpl_id': tmpl_id.id,
+            'attribute_value_ids': [(6, 0, values)],
+            'active': tmpl_id.active,
+        }
+
+    def create_product_product(self, template=None, attributes=None):
+        if template and attributes:
+            product_dict = self.get_product_dict(template, attributes)
+            return self.env['product.product'].create(product_dict)
+
     @api.multi
     def _action_launch_stock_rule(self):
         for line in self:
@@ -47,6 +60,8 @@ class SaleOrderLine(models.Model):
                             'value_id': custom.value_id.id,
                             'custom_value': custom.custom_value,
                         }))
+                if not line.product_id:
+                    line.product_id = line.create_product_product(line.product_tmpl_id, line.product_attribute_ids)
                 super(SaleOrderLine, line.with_context(extra_fields={
                     'product_version_id': line.product_version_id.id,
                     'product_attribute_ids':
