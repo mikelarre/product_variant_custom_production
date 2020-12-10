@@ -1,6 +1,9 @@
 # Copyright 2019 Mikel Arregi Etxaniz - AvanzOSC
 # License AGPL-3 - See http://www.gnu.org/licenses/agpl-3.0.html
 from odoo import api, fields, models
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class SaleOrder(models.Model):
@@ -79,9 +82,22 @@ class SaleOrderLine(models.Model):
             'active': tmpl_id.active,
         }
 
-    def create_product_product(self, template=None, attributes=None):
-        product_dict = self.get_product_dict(self.product_tmpl_id, self.product_attribute_ids)
-        self.product_id = self.env['product.product'].create(product_dict)
+    def _all_attribute_lines_filled(self):
+        for value in self.product_attribute_ids:
+            if not value.value_id.id:
+                return False
+        return True
+
+    def create_product_product_line(self):
+        product_obj = self.env['product.product']
+        _logger.info("xxxxxxxxxxxxxxxxxxxxxxx")
+        product_id = product_obj._product_find(self.product_tmpl_id,
+                                               self.product_attribute_ids)
+        _logger.info("create_product: {}-{}".format(product_id, self._all_attribute_lines_filled()))
+        if not product_id and self._all_attribute_lines_filled():
+            product_dict = product_obj.get_product_dict(
+                self.product_tmpl_id, self.product_attribute_ids)
+            self.product_id = product_obj.create(product_dict)
 
     @api.model
     def create(self, values):
