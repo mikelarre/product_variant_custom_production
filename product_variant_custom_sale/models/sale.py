@@ -74,6 +74,24 @@ class SaleOrderLine(models.Model):
             "Missing required fields on accountable sale order line."),
     ]
 
+    def _get_sale_line_description(self):
+        if not self.product_id:
+            return
+        product_lang = self.product_id.with_context(
+            lang=self.partner_id.lang,
+            partner_id=self.partner_id.id,
+        )
+        self.name = product_lang.display_name or ""
+        version_description = " "
+        for value_line in self.custom_value_ids:
+            if value_line.custom_value:
+                version_description += "[{}: {}({})]".format(
+                    value_line.attribute_id.name, value_line.value_id.name,
+                    value_line.custom_value)
+        if product_lang.description_sale:
+            self.name += '\n' + product_lang.description_sale
+        return self.name + version_description
+
     def get_product_dict(self, tmpl_id, attributes):
         values = attributes.mapped("value_id.id")
         return {
@@ -206,8 +224,16 @@ class SaleOrderLine(models.Model):
     def product_version_id_change(self):
         if self.product_version_id:
             self.product_id = self.product_version_id.product_id
+            self.name = self._get_sale_line_description()
         self.custom_value_ids = self._delete_custom_lines()
         self.custom_value_ids = self._set_custom_lines()
+
+    @api.onchange('custom_value_ids')
+    def onchange_version_lines(self):
+        product_version = self.product_id._find_version(
+            self.custom_value_ids)
+        self.product_version_id = product_version
+        self.name = self._get_sale_line_description()
 
 
 class SaleLineAttribute(models.Model):
