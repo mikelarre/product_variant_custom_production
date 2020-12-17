@@ -78,8 +78,8 @@ class SaleOrderLine(models.Model):
         if not self.product_id:
             return
         product_lang = self.product_id.with_context(
-            lang=self.partner_id.lang,
-            partner_id=self.partner_id.id,
+            lang=self.order_id.partner_id.lang,
+            partner_id=self.order_id.partner_id.id,
         )
         self.name = product_lang.display_name or ""
         version_description = " "
